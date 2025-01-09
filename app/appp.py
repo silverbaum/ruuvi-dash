@@ -1,8 +1,8 @@
 from flask import Flask, request, jsonify, render_template
 from flask_socketio import SocketIO, emit
 import os
-import gunicorn
-import six
+#import gunicorn
+#import six
 import eventlet
 eventlet.monkey_patch()
 
@@ -45,10 +45,28 @@ def request_data():  # Renamed function since 'request' conflicts with Flask's r
         # Define tags with MAC addresses
         tag_magicmountain = tags['D6:34:9B:BF:40:B2']
         tag_lodge = tags['CC:22:D5:38:CB:97']
-        # Update data variables
+        
+        # Update magicmountain data
+        magicmountain.update({
+            "temp": tag_magicmountain.get('temperature', 0),
+            "humidity": tag_magicmountain.get('humidity', 0),
+            "pressure": (tag_magicmountain.get('pressure', 0)/1000),
+            "acceleration_x": tag_magicmountain.get('accelerationX', 0),
+            "acceleration_y": tag_magicmountain.get('accelerationY', 0),
+            "acceleration_z": tag_magicmountain.get('accelerationZ', 0)
+        })
+        
+        # Update lodge data
+        lodge.update({
+            "temp": tag_lodge.get('temperature', 0),
+            "humidity": tag_lodge.get('humidity', 0),
+            "pressure": (tag_lodge.get('pressure', 0)/1000),
+            "acceleration_x": tag_lodge.get('accelerationX', 0),
+            "acceleration_y": tag_lodge.get('accelerationY', 0),
+            "acceleration_z": tag_lodge.get('accelerationZ', 0)
+        })
 
-
-        print(tags)
+        print(f"Updated data - Magic Mountain: {magicmountain}, Lodge: {lodge}")
         socketio.emit('data_update', {'magicmountain': magicmountain, 'lodge': lodge})  # Emit data to all connected clients
         return jsonify({"status": "success", "data": data}), 200
     except Exception as e:
