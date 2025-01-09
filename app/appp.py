@@ -7,13 +7,10 @@ import eventlet
 eventlet.monkey_patch()
 
 app = Flask(__name__)
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins='*')
 
-data = {}  # Initialize data variable
-
-
-#dictionaries to hold the ruuvi data variables
-kitchen = {
+# Dictionaries to hold the Ruuvi data variables
+magicmountain = {
     "temp": 0,
     "humidity": 0,
     "pressure": 0,
@@ -22,7 +19,7 @@ kitchen = {
     "acceleration_z": 0
 }
 
-outside = {
+lodge = {
     "temp": 0,
     "humidity": 0,
     "pressure": 0,
@@ -30,23 +27,29 @@ outside = {
     "acceleration_y": 0,
     "acceleration_z": 0
 }
-
-
 
 @app.route('/')
 def dashboard():
+    data = {
+        'magicmountain': magicmountain,
+        'lodge': lodge
+    }
     return render_template('dashboard.html', data=data)
 
 @app.route('/request', methods=['POST'])
-def request_data():  # renamed function since 'request' conflicts with Flask's request object
+def request_data():  # Renamed function since 'request' conflicts with Flask's request object
+    global magicmountain, lodge
     try:
         data = request.get_json()
         tags = data['data']['tags']
+        # Define tags with MAC addresses
         tag_magicmountain = tags['D6:34:9B:BF:40:B2']
-        tag_lodge=tags['CC:22:D5:38:CB:97']
-        temp=tag_magicmountain['temperature']
+        tag_lodge = tags['CC:22:D5:38:CB:97']
+        # Update data variables
+
+
         print(tags)
-        socketio.emit('data_update', data)  # Emit data to all connected clients
+        socketio.emit('data_update', {'magicmountain': magicmountain, 'lodge': lodge})  # Emit data to all connected clients
         return jsonify({"status": "success", "data": data}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400

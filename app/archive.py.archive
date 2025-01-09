@@ -1,15 +1,12 @@
-import eventlet
-eventlet.monkey_patch()
-
 from flask import Flask, request, jsonify, render_template
 from flask_socketio import SocketIO, emit
-import os
-import six
 
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-# Dictionaries to hold the Ruuvi data variables
+
+
+#dictionaries to hold the ruuvi data variables
 magicmountain = {
     "temp": 0,
     "humidity": 0,
@@ -28,6 +25,8 @@ lodge = {
     "acceleration_z": 0
 }
 
+
+
 @app.route('/')
 def dashboard():
     data = {
@@ -37,14 +36,14 @@ def dashboard():
     return render_template('dashboard.html', data=data)
 
 @app.route('/request', methods=['POST'])
-def request_data():  # Renamed function since 'request' conflicts with Flask's request object
-    global magicmountain, lodge
+def request_data():  # renamed function since 'request' conflicts with Flask's request object
+    global data
     try:
         data = request.get_json()
         tags = data['data']['tags']
-        # Define tags with MAC addresses
+        #Define tags with MAC addresses
         tag_magicmountain = tags['D6:34:9B:BF:40:B2']
-        tag_lodge = tags['CC:22:D5:38:CB:97']
+        tag_lodge=tags['CC:22:D5:38:CB:97']
         # Update data variables
         magicmountain.update({
             'temp': tag_magicmountain['temperature'],
@@ -63,37 +62,13 @@ def request_data():  # Renamed function since 'request' conflicts with Flask's r
             'acceleration_z': tag_lodge['acceleration_z']
         })
 
+
         print(tags)
-        socketio.emit('data_update', {'magicmountain': magicmountain, 'lodge': lodge})  # Emit data to all connected clients
+        socketio.emit('data_update', data)  # Emit data to all connected clients
         return jsonify({"status": "success", "data": data}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
 
 if __name__ == '__main__':
-    if os.getenv('FLASK_ENV') == 'development':
-        socketio.run(app, debug=True, host='0.0.0.0', port=5000)
-    else:
-        from gunicorn.app.base import BaseApplication
-        from six import iteritems
-
-        class StandaloneApplication(BaseApplication):
-            def __init__(self, app, options=None):
-                self.options = options or {}
-                self.application = app
-                super(StandaloneApplication, self).__init__()
-
-            def load_config(self):
-                config = {key: value for key, value in iteritems(self.options)
-                          if key in self.cfg.settings and value is not None}
-                for key, value in iteritems(config):
-                    self.cfg.set(key.lower(), value)
-
-            def load(self):
-                return self.application
-
-        options = {
-            'bind': '0.0.0.0:5000',
-            'workers': 1,
-            'worker_class': 'eventlet'
-        }
-        StandaloneApplication(app, options).run()
+   socketio.run(app, debug=False, host='0.0.0.0', port=5000)
+   #gunicorn --worker-class eventlet --workers 1 --bind 0.0.0.0:5000 app.app:app
