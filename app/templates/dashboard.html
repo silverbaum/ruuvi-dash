@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        .dark-mode {
+            background-color: #121212;
+            color: #fff;
+        }
+
+        .toggle-switch {
+            position: fixed;
+            bottom: 20px;
+            left: 10%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-left: 10px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Dashboard</h1>
+        <div id="connection-status" class="alert alert-info">
+            Connecting to server...
+        </div>
+        <table class="table table-striped mt-3">
+            <thead>
+                <tr>
+                    <th>Where</th>
+                    <th>Humidity</th>
+                    <th>Pressure</th>
+                    <th>Temperature</th>
+                    <th>Acceleration X</th>
+                    <th>Acceleration Y</th>
+                    <th>Acceleration Z</th>
+                </tr>
+            </thead>
+            <tbody id="data-table">
+                <!-- Data will be inserted here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Dark mode toggle switch -->
+    <div class="toggle-switch">
+        <label for="darkModeSwitch">Dark Mode:</label>
+        <label class="switch">
+            <input type="checkbox" id="darkModeSwitch" onclick="toggleDarkMode()">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <script>
+        // Initialize Socket.IO
+        const socket = io();
+        const connectionStatus = document.getElementById('connection-status');
+        const locations = {
+            "kitchen": "Kitchen",
+            "outside": "Outside"
+        };
+
+        // Connection status handlers
+        socket.on('connect', () => {
+            connectionStatus.className = 'alert alert-success';
+            connectionStatus.textContent = 'Connected to server';
+        });
+
+        socket.on('disconnect', () => {
+            connectionStatus.className = 'alert alert-danger';
+            connectionStatus.textContent = 'Disconnected from server';
+        });
+
+        // Initial data load
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const initialData = JSON.parse('{{ data|tojson }}');
+            updateTable(initialData);
+        });
+
+        // Update data when received from server
+        socket.on('data_update', function(data) {
+            updateTable(data);
+        });
+
+        function updateTable(data) {
+            const tableBody = document.getElementById('data-table');
+            tableBody.innerHTML = '';
+            Object.keys(data).forEach((location) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${locations[location]}</td>
+                    <td>${data[location].humidity.toFixed(2)}</td>
+                    <td>${data[location].pressure.toFixed(2)}</td>
+                    <td>${data[location].temp.toFixed(2)}</td>
+                    <td>${data[location].acceleration_x.toFixed(3)}</td>
+                    <td>${data[location].acceleration_y.toFixed(3)}</td>
+                    <td>${data[location].acceleration_z.toFixed(3)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Dark mode functionality
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+            let darkMode = document.body.classList.contains("dark-mode");
+            localStorage.setItem("darkMode", darkMode);
+        }
+
+        window.onload = function() {
+            if (localStorage.getItem("darkMode") === "true") {
+                document.body.classList.add("dark-mode");
+                document.getElementById("darkModeSwitch").checked = true;
+            }
+        }
+    </script>
+</body>
+</html>

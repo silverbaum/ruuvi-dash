@@ -25,7 +25,7 @@ def request_data():  # renamed function since 'request' conflicts with Flask's r
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
-@app.route('/dashboard')
+@app.route('/')
 def dashboard():
     return render_template('dashboard.html', data=data)
 
