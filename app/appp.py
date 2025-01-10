@@ -1,10 +1,12 @@
+import eventlet
+eventlet.monkey_patch()
 from flask import Flask, request, jsonify, render_template
 from flask_socketio import SocketIO, emit
 import os
 #import gunicorn
 #import six
-import eventlet
-eventlet.monkey_patch()
+
+
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins='*')
@@ -51,9 +53,9 @@ def request_data():  # Renamed function since 'request' conflicts with Flask's r
             "temp": tag_magicmountain.get('temperature', 0),
             "humidity": tag_magicmountain.get('humidity', 0),
             "pressure": (tag_magicmountain.get('pressure', 0)/1000),
-            "acceleration_x": tag_magicmountain.get('accelerationX', 0),
-            "acceleration_y": tag_magicmountain.get('accelerationY', 0),
-            "acceleration_z": tag_magicmountain.get('accelerationZ', 0)
+            "acceleration_x": tag_magicmountain.get('acceleration_x', 0),
+            "acceleration_y": tag_magicmountain.get('acceleration_y', 0),
+            "acceleration_z": tag_magicmountain.get('acceleration_z', 0)
         })
         
         # Update lodge data
@@ -61,12 +63,13 @@ def request_data():  # Renamed function since 'request' conflicts with Flask's r
             "temp": tag_lodge.get('temperature', 0),
             "humidity": tag_lodge.get('humidity', 0),
             "pressure": (tag_lodge.get('pressure', 0)/1000),
-            "acceleration_x": tag_lodge.get('accelerationX', 0),
-            "acceleration_y": tag_lodge.get('accelerationY', 0),
-            "acceleration_z": tag_lodge.get('accelerationZ', 0)
+            "acceleration_x": tag_lodge.get('acceleration_x', 0),
+            "acceleration_y": tag_lodge.get('acceleration_y', 0),
+            "acceleration_z": tag_lodge.get('acceleration_z', 0)
         })
 
-        print(f"Updated data - Magic Mountain: {magicmountain}, Lodge: {lodge}")
+        #print(f"Magic Mountain: {magicmountain}, Lodge: {lodge}")
+        print(tags)
         socketio.emit('data_update', {'magicmountain': magicmountain, 'lodge': lodge})  # Emit data to all connected clients
         return jsonify({"status": "success", "data": data}), 200
     except Exception as e:
