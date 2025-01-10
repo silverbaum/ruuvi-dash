@@ -1,15 +1,15 @@
-import eventlet
-eventlet.monkey_patch()
+#import eventlet
+#eventlet.monkey_patch()
+from gevent import monkey
+monkey.patch_all()
 from flask import Flask, request, jsonify, render_template
 from flask_socketio import SocketIO, emit
 import os
-#import gunicorn
-#import six
 
 
 
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins='*')
+socketio = SocketIO(app, cors_allowed_origins='*', async_mode='gevent')
 
 # Dictionaries to hold the Ruuvi data variables
 magicmountain = {
@@ -69,11 +69,12 @@ def request_data():  # Renamed function since 'request' conflicts with Flask's r
         })
 
         #print(f"Magic Mountain: {magicmountain}, Lodge: {lodge}")
-        print(tags)
-        socketio.emit('data_update', {'magicmountain': magicmountain, 'lodge': lodge})  # Emit data to all connected clients
+        print(tags) # print "raw" data to terminal for debugging
+        socketio.emit('data_update', {'magicmountain': magicmountain, 'lodge': lodge})  
         return jsonify({"status": "success", "data": data}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
+
 
 if __name__ == '__main__':
     if os.getenv('FLASK_ENV') == 'development':
@@ -100,6 +101,7 @@ if __name__ == '__main__':
         options = {
             'bind': '0.0.0.0:5000',
             'workers': 1,
-            'worker_class': 'eventlet'
+            #'worker_class': 'eventlet'
+            'worker_class': 'geventwebsocket.gunicorn.workers.GeventWebSocketWorker'
         }
         StandaloneApplication(app, options).run()
