@@ -1,17 +1,17 @@
-import eventlet
-eventlet.monkey_patch()
+from gevent import monkey
+monkey.patch_all()
 from flask import Flask, request, jsonify, render_template
 from flask_socketio import SocketIO, emit
 import os
-#import gunicorn
-#import six
+from tags import * #MAC addresses, soon unnecessary
 
 
 
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins='*')
+socketio = SocketIO(app, cors_allowed_origins='*', async_mode='gevent')
 
 # Dictionaries to hold the Ruuvi data variables
+# WIP: create dynamic data storage to enable other/more tags
 magicmountain = {
     "temp": 0,
     "humidity": 0,
@@ -38,16 +38,17 @@ def dashboard():
     }
     return render_template('dashboard.html', data=data)
 
+  
 @app.route('/request', methods=['POST'])
-def request_data():  # Renamed function since 'request' conflicts with Flask's request object
+def request_data(): 
     global magicmountain, lodge
     try:
         data = request.get_json()
         tags = data['data']['tags']
         # Define tags with MAC addresses
-        tag_magicmountain = tags['D6:34:9B:BF:40:B2']
-        tag_lodge = tags['CC:22:D5:38:CB:97']
-        
+        tag_magicmountain = tags[magicmountainmac]
+        tag_lodge = tags[lodgemac]
+        #determine order of tags
         # Update magicmountain data
         magicmountain.update({
             "temp": tag_magicmountain.get('temperature', 0),
@@ -69,8 +70,9 @@ def request_data():  # Renamed function since 'request' conflicts with Flask's r
         })
 
         #print(f"Magic Mountain: {magicmountain}, Lodge: {lodge}")
-        print(tags)
-        socketio.emit('data_update', {'magicmountain': magicmountain, 'lodge': lodge})  # Emit data to all connected clients
+        #print(tags) # print "raw" data to terminal for debugging
+        socketio.emit('data_update', {'magicmountain': magicmountain, 'lodge': lodge})  
+
         return jsonify({"status": "success", "data": data}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
@@ -100,6 +102,7 @@ if __name__ == '__main__':
         options = {
             'bind': '0.0.0.0:5000',
             'workers': 1,
-            'worker_class': 'eventlet'
+            'worker_class': 'geventwebsocket.gunicorn.workers.GeventWebSocketWorker'
+
         }
         StandaloneApplication(app, options).run()
