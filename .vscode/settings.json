@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/6fdb77ae-681b-4f33-8b14-89f769eeb13a/resourceGroups/Wapp/providers/Microsoft.Web/sites/ruuvidash",
+    "appService.deploySubpath": "."
+}

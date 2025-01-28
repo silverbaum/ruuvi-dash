@@ -38,7 +38,7 @@ def dashboard():
     }
     return render_template('dashboard.html', data=data)
 
-
+  
 @app.route('/request', methods=['POST'])
 def request_data(): 
     global magicmountain, lodge
@@ -49,7 +49,6 @@ def request_data():
         tag_magicmountain = tags[magicmountainmac]
         tag_lodge = tags[lodgemac]
         #determine order of tags
-
         # Update magicmountain data
         magicmountain.update({
             "temp": tag_magicmountain.get('temperature', 0),
@@ -73,10 +72,10 @@ def request_data():
         #print(f"Magic Mountain: {magicmountain}, Lodge: {lodge}")
         #print(tags) # print "raw" data to terminal for debugging
         socketio.emit('data_update', {'magicmountain': magicmountain, 'lodge': lodge})  
+
         return jsonify({"status": "success", "data": data}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
-
 
 if __name__ == '__main__':
     if os.getenv('FLASK_ENV') == 'development':
@@ -104,5 +103,6 @@ if __name__ == '__main__':
             'bind': '0.0.0.0:5000',
             'workers': 1,
             'worker_class': 'geventwebsocket.gunicorn.workers.GeventWebSocketWorker'
+
         }
         StandaloneApplication(app, options).run()
