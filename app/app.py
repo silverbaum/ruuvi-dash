@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_socketio import SocketIO, emit
 from os import getenv
 
-"""
+
 from os import path
 import sqlite3
 
@@ -13,7 +13,7 @@ dbpath = path.join("app", "data", "ruuvidata.db")
 cx = sqlite3.connect(dbpath)
 cursor = cx.cursor()
 cursor.execute('CREATE TABLE IF NOT EXISTS ruuvi(Temperature float, Humidity float, Pressure float, Date date)')
-"""
+
 
 
 app = Flask(__name__)
@@ -69,8 +69,6 @@ def dashboard():
 @app.route('/request', methods=['POST'])
 def request_data():
     try:
-        """Receives the JSON data, finds"""
-        #assigning variables
         cleandata = {}
         data = request.get_json()
         tags = data['data']['tags']
@@ -81,10 +79,8 @@ def request_data():
         #creating the ruuvitag objects
         if num_of_tags != len(objs): #clear the objects if the amount of tags changes
             objectifier(0)
-        if objs == []: #if the list is empty i.e. no objects, create new objects
+        if objs == []: #if the list is empty, create new objects
             objectifier(num_of_tags) # create tag objects
-
-        
 
         
         #iterate through the data using the mac addresses and place it in the cleandata dict
@@ -96,15 +92,14 @@ def request_data():
         
         #update the generated objects with the received data
         for i in range(num_of_tags):
-        
             objs[i].updata(cleandata[i])
 
         # Create packets with tag names
         packets = {}
         for i in range(len(objs)):
-            packets[f"Tag {i}"] = objs[i].data # name packets
+            packets[f"Tag {i}"] = objs[i].data
         
-        print("Emitting data update:", packets)  # Debug print
+        #print("Emitting data update:", packets)  # Debug print
         socketio.emit('data_update', packets)
 
         return jsonify({"status": "success", "data": packets}), 200
@@ -120,28 +115,4 @@ if __name__ == '__main__':
     if getenv('FLASK_ENV') == 'development':
         socketio.run(app, debug=True, host='0.0.0.0', port=5000)
     else:
-        from gunicorn.app.base import BaseApplication
-    
-
-        class StandaloneApplication(BaseApplication):
-            def __init__(self, app, options=None):
-                self.options = options or {}
-                self.application = app
-                super(StandaloneApplication, self).__init__()
-
-            def load_config(self):
-                config = {key: value for key, value in self.options.items()
-                          if key in self.cfg.settings and value is not None}
-                for key, value in config.items():
-                    self.cfg.set(key.lower(), value)
-
-            def load(self):
-                return self.application
-
-        options = {
-            'bind': '0.0.0.0:5002',
-            'workers': 1,
-            'worker_class': 'geventwebsocket.gunicorn.workers.GeventWebSocketWorker'
-
-        }
-        StandaloneApplication(app, options).run()
+        socketio.run(app, debug=False)
