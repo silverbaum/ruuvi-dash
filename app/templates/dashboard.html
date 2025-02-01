@@ -69,7 +69,7 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container table-responsive"> <!--Use 'container-fluid' for full-width dashboard-->
         <h1 class="mt-5">Dashboard</h1>
         <div id="connection-status" class="alert alert-info">
             Connecting to server...
@@ -77,13 +77,11 @@
         <table class="table table-striped mt-3">
             <thead>
                 <tr>
-                    <th>Where</th>
+                    <th>Tag ID</th>
+                    <th>Temperature (C)</th>
                     <th>Humidity (%)</th>
                     <th>Pressure (kPa)</th>
-                    <th>Temperature</th>
-                    <th>Acceleration X</th>
-                    <th>Acceleration Y</th>
-                    <th>Acceleration Z</th>
+                    
                 </tr>
             </thead>
             <tbody id="data-table">
@@ -105,10 +103,6 @@
         // Initialize Socket.IO
         const socket = io();
         const connectionStatus = document.getElementById('connection-status');
-        const locations = {
-            "magicmountain": "Kitchen",
-            "lodge": "Lodge"
-        };
 
         // Connection status handlers
         socket.on('connect', () => {
@@ -124,29 +118,37 @@
         // Initial data load
         document.addEventListener('DOMContentLoaded', (event) => {
             const initialData = JSON.parse('{{ data|tojson }}');
+            console.log('Initial data:', initialData);
             updateTable(initialData);
         });
 
         // Update data when received from server
         socket.on('data_update', function(data) {
+            console.log('Received data update:', data);
             updateTable(data);
         });
 
         function updateTable(data) {
             const tableBody = document.getElementById('data-table');
             tableBody.innerHTML = '';
-            Object.keys(data).forEach((location) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${locations[location]}</td>
-                    <td>${data[location].humidity.toFixed(2)}</td>
-                    <td>${data[location].pressure.toFixed(2)}</td>
-                    <td>${data[location].temp.toFixed(2)}</td>
-                    <td>${data[location].acceleration_x.toFixed(3)}</td>
-                    <td>${data[location].acceleration_y.toFixed(3)}</td>
-                    <td>${data[location].acceleration_z.toFixed(3)}</td>
-                `;
-                tableBody.appendChild(row);
+            
+            Object.keys(data).forEach((tagId) => {
+                const tagData = data[tagId];
+                //debug
+                //console.log('Processing tag:', tagId, 'with data:', tagData);
+                
+                // Check if data exists and has the expected structure
+                if (tagData && typeof tagData === 'object') {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${tagId}</td>
+                        <td>${tagData.temperature ? tagData.temperature.toFixed(2) : 'N/A'}</td>
+                        <td>${tagData.humidity ? tagData.humidity.toFixed(2) : 'N/A'}</td>
+                        <td>${tagData.pressure ? tagData.pressure.toFixed(2) : 'N/A'}</td>
+                        
+                    `;
+                    tableBody.appendChild(row);
+                }
             });
         }
 
