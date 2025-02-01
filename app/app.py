@@ -2,26 +2,33 @@ from gevent import monkey
 monkey.patch_all()
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_socketio import SocketIO, emit
-from os import getenv
-
-
-from os import path
-import sqlite3
-
-
-dbpath = path.join("app", "data", "ruuvidata.db")
-cx = sqlite3.connect(dbpath)
-cursor = cx.cursor()
-cursor.execute('CREATE TABLE IF NOT EXISTS ruuvi(Temperature float, Humidity float, Pressure float, Date date)')
-
-
+from os import getenv, path
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
 objs = [] # list which contains the ruuvitag objects
 
 
-#RuuviTag object class
+""" SQLITE """
+import sqlite3
+dbpath = path.join("app", "data", "ruuvidata.db")
+cx = sqlite3.connect(dbpath)
+cursor = cx.cursor()
+cursor.execute('CREATE TABLE IF NOT EXISTS ruuvi(Name varchar(20), Temperature float, Humidity float, Pressure float, Date date)') 
+
+def datacollector(packets):
+    try:
+        for tag in packets:
+            vals = packets[tag]
+            cursor.execute(f"INSERT INTO ruuvi(name, temperature, humidity, pressure, date) values ('{tag}', {vals.get('temperature')}, {vals.get('humidity')}, {vals.get('pressure')}, datetime('now', 'localtime'));")
+            cx.commit()
+    except:
+        print("data collection failed")
+    return
+
+
+
+""" RuuviTag object class """
 class RuuviTag:
  def __init__(self):
       self.data = {
@@ -35,8 +42,6 @@ class RuuviTag:
 	  "humidity": data.get('humidity', 0),
 	  "pressure": (data.get('pressure', 0)/1000)}
 	  )
-      
-
 
 def objectifier(ntag): #function to create the RuuviTag objects
     global objs # I wish it wasn't global, currently required by both dashboard and request_data functions
@@ -51,21 +56,19 @@ def objectifier(ntag): #function to create the RuuviTag objects
 
 
 
-#redirect to dash
-@app.route('/')
+""" Flask app routes """
+@app.route('/') #redirect to dash
 def redirecter():
     return  redirect(url_for('dashboard'), code=308)
 
-#dashboard
 @app.route('/dashboard')
 def dashboard():
     data = {}
-    for i, obj in enumerate(objs): # creates indexed list of objs (0, obj[0]), (1, obj[1])
-        data[f"Tag {i}"] = obj.data 
+    for i, obj in enumerate(objs): 
+        data[f"Tag_{i}"] = obj.data 
     
     return render_template('dashboard.html', data=data)
 
-#data route
 @app.route('/request', methods=['POST'])
 def request_data():
     try:
@@ -84,10 +87,9 @@ def request_data():
 
         
         #iterate through the data using the mac addresses and place it in the cleandata dict
-        datanameiterator = 0
-        for tag in tag_macs:
-            cleandata[datanameiterator] = data['data']['tags'][tag]['data']
-            datanameiterator += 1
+        for index, tag in enumerate(tag_macs):
+            cleandata[index] = data['data']['tags'][tag]['data']
+          
         
         
         #update the generated objects with the received data
@@ -97,7 +99,12 @@ def request_data():
         # Create packets with tag names
         packets = {}
         for i in range(len(objs)):
-            packets[f"Tag {i}"] = objs[i].data
+            packets[f"Tag_{i}"] = objs[i].data
+    
+
+
+        
+        datacollector(packets)
         
         #print("Emitting data update:", packets)  # Debug print
         socketio.emit('data_update', packets)
@@ -115,4 +122,4 @@ if __name__ == '__main__':
     if getenv('FLASK_ENV') == 'development':
         socketio.run(app, debug=True, host='0.0.0.0', port=5000)
     else:
-        socketio.run(app, debug=False)
+        socketio.run(app, debug=False, host='0.0.0.0', port=5003)
