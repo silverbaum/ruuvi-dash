@@ -7,3 +7,16 @@
 - SocketIO for real-time data
 - Bootstrap for the dashboard layout
 
+## 
+### To run (locally):
+First install required modules:
+```
+pip install -r requirements.txt 
+```
+Then run with gunicorn:
+```
+gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --bind localhost:[PORT] app.app:app
+```
+- Replace [PORT] with port of your choosing
+
+
