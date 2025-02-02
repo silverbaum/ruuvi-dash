@@ -1,6 +1,4 @@
 """
-MIT License
-
 Copyright (c) 2025 Topias Silfverhuth
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -104,16 +102,11 @@ def request_data(): #only supports decoded data
         if num_of_tags != len(objs): #clear the objects if the amount of tags changes
             objectifier(0)
         if objs == []: #if the list is empty i.e. no objects, create new objects
-            objectifier(num_of_tags) # create tag objects
+            objectifier(num_of_tags) #create tag objects
 
-        
-
-        
-        #iterate through the data using the mac addresses and place it in the cleandata dict
-        
+        #create indexed data dictionary
         for index, tag in enumerate(tag_macs):
             cleandata[index] = data['data']['tags'][tag]
-        
         
         #update the generated objects with the received data
         for i in range(num_of_tags):
@@ -124,10 +117,10 @@ def request_data(): #only supports decoded data
         for i in range(len(objs)):
             packets[f"Tag {i}"] = objs[i].data # name packets
         
-        print("Emitting data update:", packets)  # Debug print
         socketio.emit('data_update', packets)
 
         return jsonify({"status": "success", "data": packets}), 200
+    
     except Exception as e:
         print("Error in request_data:", str(e))  # Debug print
         return jsonify({"status": "error", "message": str(e)}), 400
