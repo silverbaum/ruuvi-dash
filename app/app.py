@@ -88,7 +88,7 @@ def request_data():
         
         #iterate through the data using the mac addresses and place it in the cleandata dict
         for index, tag in enumerate(tag_macs):
-            cleandata[index] = data['data']['tags'][tag]['data']
+            cleandata[index] = data['data']['tags'][tag]
           
         
         
