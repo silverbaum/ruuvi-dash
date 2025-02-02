@@ -67,15 +67,13 @@ def dashboard():
 
 #data route
 @app.route('/request', methods=['POST'])
-def request_data():
+def request_data(): #only supports decoded data
     try:
-        """Receives the JSON data, finds"""
-        #assigning variables
         cleandata = {}
         data = request.get_json()
         tags = data['data']['tags']
         num_of_tags = len(tags) 
-        tag_macs = tags.keys() #keys from the tags dictionary
+        tag_macs = tags.keys() #MAC addresses from the tags dictionary
 
 
         #creating the ruuvitag objects
@@ -88,15 +86,13 @@ def request_data():
 
         
         #iterate through the data using the mac addresses and place it in the cleandata dict
-        datanameiterator = 0
-        for tag in tag_macs:
-            cleandata[datanameiterator] = data['data']['tags'][tag]['data']
-            datanameiterator += 1
+        
+        for index, tag in enumerate(tag_macs):
+            cleandata[index] = data['data']['tags'][tag]
         
         
         #update the generated objects with the received data
         for i in range(num_of_tags):
-        
             objs[i].updata(cleandata[i])
 
         # Create packets with tag names
@@ -113,10 +109,18 @@ def request_data():
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
-#command for gunicorn:
+#command for gunicorn(for docker place in dockerfile CMD[]):
 #gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --bind 0.0.0.0:5000 app.app:app
 
 if __name__ == '__main__':
+    if getenv('FLASK_ENV' == 'development'):
+        socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    else:
+        socketio.run(app, debug=False, host='0.0.0.0', port=5000)
+        
+"""
+The following is for when running outside a container:
+
     if getenv('FLASK_ENV') == 'development':
         socketio.run(app, debug=True, host='0.0.0.0', port=5000)
     else:
@@ -145,3 +149,5 @@ if __name__ == '__main__':
 
         }
         StandaloneApplication(app, options).run()
+        
+"""
