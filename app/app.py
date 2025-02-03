@@ -32,18 +32,20 @@ objs = [] # list which contains the ruuvitag objects
 
 
 """ SQLITE """
-import sqlite3
-dbpath = path.join("app", "data", "ruuvidata.db")
-cx = sqlite3.connect(dbpath)
+import psycopg2
+from passwds import *
+#dbpath = path.join("app", "data", "ruuvidata.db")
+cx = psycopg2.connect(f"dbname=mydata user=postgres password={password} host=127.0.0.1 port=5432")
 cursor = cx.cursor()
-cursor.execute('CREATE TABLE IF NOT EXISTS ruuvi(Name varchar(20), Temperature float, Humidity float, Pressure float, Date date)') 
+cursor.execute('CREATE TABLE IF NOT EXISTS ruuvi(Name varchar(20), Temperature float, Humidity float, Pressure float, Date timestamptz)') 
+cx.commit()
 
 def datacollector(packets):
     try:
         for tag in packets:
             vals = packets[tag]
-            cursor.execute(f"INSERT INTO ruuvi(name, temperature, humidity, pressure, date) values ('{tag}', {vals.get('temperature')}, {vals.get('humidity')}, {vals.get('pressure')}, datetime('now', 'localtime'));")
-            cx.commit()
+            cursor.execute(f"INSERT INTO ruuvi(name, temperature, humidity, pressure, date) VALUES ('{tag}', {vals.get('temperature')}, {vals.get('humidity')}, {vals.get('pressure')}, NOW());")
+        cx.commit()
     except:
         print("data collection failed")
     return
