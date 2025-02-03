@@ -40,7 +40,6 @@ cursor.execute('CREATE TABLE IF NOT EXISTS ruuvi(Temperature float, Humidity flo
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
-objs = [] # list which contains the ruuvitag objects
 
 
 #RuuviTag object class
@@ -58,18 +57,16 @@ class RuuviTag:
 	  "pressure": (data.get('pressure', 0)/1000)}
 	  )
       
-
-
-def objectifier(ntag): #function to create the RuuviTag objects
-    global objs
-    if ntag == 0:
-        objs.clear()
-        objs = []
-
-    for i in range(ntag):
-        i = RuuviTag()
-        objs.append(i)
-    return objs
+class objs: #class to manage ruuvitag objects
+    def __init__(self):
+        self.tags=[]
+    def empty(self):
+        self.tags = []
+    def add(self, ntag):
+        for i in range(ntag):
+            i = RuuviTag()
+            self.tags.append(i)
+objectifier = objs()
 
 
 
@@ -82,8 +79,7 @@ def redirecter():
 @app.route('/dashboard')
 def dashboard():
     data = {}
-    local_objs = objs
-    for i, obj in enumerate(local_objs): # creates indexed list of objs (0, obj[0]), (1, obj[1])
+    for i, obj in enumerate(objectifier.tags): # creates indexed list of objs (0, obj[0]), (1, obj[1])
         data[f"Tag {i}"] = obj.data 
     return render_template('dashboard.html', data=data)
 
@@ -92,7 +88,6 @@ def dashboard():
 def request_data(): #only supports decoded data
     try:
         cleandata = {}
-        l_objs = objs
         data = request.get_json()
         tags = data['data']['tags']
         num_of_tags = len(tags) 
@@ -100,10 +95,10 @@ def request_data(): #only supports decoded data
 
 
         #creating the ruuvitag objects
-        if num_of_tags != len(l_objs): #clear the objects if the amount of tags changes
-            objectifier(0)
-        if l_objs == []: #if the list is empty i.e. no objects, create new objects
-            objectifier(num_of_tags) #create tag objects
+        if num_of_tags != len(objectifier.tags): #clear the objects if the amount of tags changes
+            objectifier.empty()
+        if objectifier.tags == []: #if the list is empty i.e. no objects, create new objects
+            objectifier.add(num_of_tags)
 
         #create indexed data dictionary
         for index, tag in enumerate(tag_macs):
@@ -111,13 +106,14 @@ def request_data(): #only supports decoded data
         
         #update the generated objects with the received data
         for i in range(num_of_tags):
-            objs[i].updata(cleandata[i])
-
+            objectifier.tags[i].updata(cleandata[i])
+        print(objectifier.tags[0].data)
         # Create packets with tag names
         packets = {}
-        for i in range(len(l_objs)):
-            packets[f"Tag {i}"] = objs[i].data # name packets
+        for i in range(len(objectifier.tags)):
+            packets[f"Tag {i}"] = objectifier.tags[i].data # name packets
         
+        print("Emitting data update: ", packets)
         socketio.emit('data_update', packets)
 
         return jsonify({"status": "success", "data": packets}), 200
