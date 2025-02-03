@@ -26,18 +26,6 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_socketio import SocketIO, emit
 from os import getenv
 
-"""
-from os import path
-import sqlite3
-
-
-dbpath = path.join("app", "data", "ruuvidata.db")
-cx = sqlite3.connect(dbpath)
-cursor = cx.cursor()
-cursor.execute('CREATE TABLE IF NOT EXISTS ruuvi(Temperature float, Humidity float, Pressure float, Date date)')
-"""
-
-
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
 
