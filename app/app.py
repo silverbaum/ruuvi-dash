@@ -24,25 +24,36 @@ from gevent import monkey
 monkey.patch_all()
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_socketio import SocketIO, emit
-from os import getenv
-
-"""
-from os import path
-import sqlite3
-
-
-dbpath = path.join("app", "data", "ruuvidata.db")
-cx = sqlite3.connect(dbpath)
-cursor = cx.cursor()
-cursor.execute('CREATE TABLE IF NOT EXISTS ruuvi(Temperature float, Humidity float, Pressure float, Date date)')
-"""
-
+from os import getenv, path
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
 
 
-#RuuviTag object class
+
+""" SQLITE """
+import psycopg2
+from passwds import *
+#dbpath = path.join("app", "data", "ruuvidata.db")
+cx = psycopg2.connect(f"dbname=mydata user=postgres password={password} host=127.0.0.1 port=5432")
+cursor = cx.cursor()
+cursor.execute('CREATE TABLE IF NOT EXISTS ruuvi(Name varchar(20), Temperature float, Humidity float, Pressure float, Date timestamptz)') 
+cx.commit()
+
+def datacollector(packets):
+    try:
+        for tag in packets:
+            vals = packets[tag]
+            cursor.execute(f"INSERT INTO ruuvi(name, temperature, humidity, pressure, date) VALUES ('{tag}', {vals.get('temperature')}, {vals.get('humidity')}, {vals.get('pressure')}, NOW());")
+        cx.commit()
+    except:
+        print("data collection failed")
+    return
+
+
+
+
+""" RuuviTag object class """
 class RuuviTag:
  def __init__(self):
       self.data = {
@@ -70,20 +81,20 @@ objectifier = objs()
 
 
 
-#redirect to dash
-@app.route('/')
+
+""" Flask app routes """
+@app.route('/') #redirect to dash
 def redirecter():
     return  redirect(url_for('dashboard'), code=308)
 
-#dashboard
 @app.route('/dashboard')
 def dashboard():
     data = {}
     for i, obj in enumerate(objectifier.tags): # creates indexed list of objs (0, obj[0]), (1, obj[1])
         data[f"Tag {i}"] = obj.data 
+
     return render_template('dashboard.html', data=data)
 
-#data route
 @app.route('/request', methods=['POST'])
 def request_data(): #only supports decoded data
     try:
@@ -112,7 +123,7 @@ def request_data(): #only supports decoded data
         packets = {}
         for i in range(len(objectifier.tags)):
             packets[f"Tag {i}"] = objectifier.tags[i].data 
-        
+
         socketio.emit('data_update', packets)
 
         return jsonify({"status": "success", "data": packets}), 200
