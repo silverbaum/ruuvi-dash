@@ -28,7 +28,7 @@ from os import getenv, path
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
-objs = [] # list which contains the ruuvitag objects
+
 
 
 """ SQLITE """
@@ -52,6 +52,7 @@ def datacollector(packets):
 
 
 
+
 """ RuuviTag object class """
 class RuuviTag:
  def __init__(self):
@@ -66,17 +67,18 @@ class RuuviTag:
 	  "humidity": data.get('humidity', 0),
 	  "pressure": (data.get('pressure', 0)/1000)}
 	  )
+      
+class objs: #class to manage ruuvitag objects
+    def __init__(self):
+        self.tags=[]
+    def empty(self):
+        self.tags = []
+    def add(self, ntag):
+        for i in range(ntag):
+            i = RuuviTag()
+            self.tags.append(i)
+objectifier = objs() 
 
-def objectifier(ntag): #function to create the RuuviTag objects
-    global objs # I wish it wasn't global, currently required by both dashboard and request_data functions
-    if ntag == 0:
-        objs.clear()
-        objs = []
-
-    for i in range(ntag):
-        i = RuuviTag()
-        objs.append(i)
-    return objs
 
 
 
@@ -88,9 +90,9 @@ def redirecter():
 @app.route('/dashboard')
 def dashboard():
     data = {}
-    for i, obj in enumerate(objs): 
-        data[f"Tag_{i}"] = obj.data 
-    
+    for i, obj in enumerate(objectifier.tags): # creates indexed list of objs (0, obj[0]), (1, obj[1])
+        data[f"Tag {i}"] = obj.data 
+
     return render_template('dashboard.html', data=data)
 
 @app.route('/request', methods=['POST'])
@@ -104,10 +106,10 @@ def request_data(): #only supports decoded data
 
 
         #creating the ruuvitag objects
-        if num_of_tags != len(objs): #clear the objects if the amount of tags changes
-            objectifier(0)
-        if objs == []: #if the list is empty i.e. no objects, create new objects
-            objectifier(num_of_tags) #create tag objects
+        if num_of_tags != len(objectifier.tags): #clear the objects if the amount of tags changes
+            objectifier.empty()
+        if objectifier.tags == []: #if the list is empty i.e. no objects, create new objects
+            objectifier.add(num_of_tags)
 
         #create indexed data dictionary
         for index, tag in enumerate(tag_macs):
@@ -115,35 +117,35 @@ def request_data(): #only supports decoded data
         
         #update the generated objects with the received data
         for i in range(num_of_tags):
-            objs[i].updata(cleandata[i])
+            objectifier.tags[i].updata(cleandata[i])
 
         # Create packets with tag names
         packets = {}
-        for i in range(len(objs)):
-            packets[f"Tag_{i}"] = objs[i].data
-        
-        datacollector(packets)
-        
+        for i in range(len(objectifier.tags)):
+            packets[f"Tag {i}"] = objectifier.tags[i].data 
+
         socketio.emit('data_update', packets)
 
         return jsonify({"status": "success", "data": packets}), 200
-    
     except Exception as e:
-        print("Error in request_data:", str(e))  # Debug print
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
-#command for gunicorn(for docker place in dockerfile CMD[]):
-#gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --bind 0.0.0.0:5000 app.app:app
+"""
+command for gunicorn(for docker place in dockerfile CMD[]):
+gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --bind 0.0.0.0:5000 app.app:app
+"""
 
 if __name__ == '__main__':
     if getenv('FLASK_ENV' == 'development'):
         socketio.run(app, debug=True, host='0.0.0.0', port=5000)
     else:
         socketio.run(app, debug=False, host='0.0.0.0', port=5000)
-        
+
+
+
 """
-The following is for when running outside a container:
+The following is for when running outside a container(starts server automagically when running file with python):
 
     if getenv('FLASK_ENV') == 'development':
         socketio.run(app, debug=True, host='0.0.0.0', port=5000)
