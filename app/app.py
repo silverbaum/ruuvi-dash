@@ -61,7 +61,7 @@ class RuuviTag:
 
 
 def objectifier(ntag): #function to create the RuuviTag objects
-    global objs # I wish it wasn't global, currently required by both dashboard and request_data functions
+    global objs
     if ntag == 0:
         objs.clear()
         objs = []
@@ -82,9 +82,9 @@ def redirecter():
 @app.route('/dashboard')
 def dashboard():
     data = {}
-    for i, obj in enumerate(objs): # creates indexed list of objs (0, obj[0]), (1, obj[1])
+    local_objs = objs
+    for i, obj in enumerate(local_objs): # creates indexed list of objs (0, obj[0]), (1, obj[1])
         data[f"Tag {i}"] = obj.data 
-    
     return render_template('dashboard.html', data=data)
 
 #data route
@@ -92,6 +92,7 @@ def dashboard():
 def request_data(): #only supports decoded data
     try:
         cleandata = {}
+        l_objs = objs
         data = request.get_json()
         tags = data['data']['tags']
         num_of_tags = len(tags) 
@@ -99,9 +100,9 @@ def request_data(): #only supports decoded data
 
 
         #creating the ruuvitag objects
-        if num_of_tags != len(objs): #clear the objects if the amount of tags changes
+        if num_of_tags != len(l_objs): #clear the objects if the amount of tags changes
             objectifier(0)
-        if objs == []: #if the list is empty i.e. no objects, create new objects
+        if l_objs == []: #if the list is empty i.e. no objects, create new objects
             objectifier(num_of_tags) #create tag objects
 
         #create indexed data dictionary
@@ -114,15 +115,13 @@ def request_data(): #only supports decoded data
 
         # Create packets with tag names
         packets = {}
-        for i in range(len(objs)):
+        for i in range(len(l_objs)):
             packets[f"Tag {i}"] = objs[i].data # name packets
         
         socketio.emit('data_update', packets)
 
         return jsonify({"status": "success", "data": packets}), 200
-    
     except Exception as e:
-        print("Error in request_data:", str(e))  # Debug print
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
