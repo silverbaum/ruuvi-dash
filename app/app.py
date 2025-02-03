@@ -139,16 +139,6 @@ gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker -
 """
 
 if __name__ == '__main__':
-    if getenv('FLASK_ENV' == 'development'):
-        socketio.run(app, debug=True, host='0.0.0.0', port=5000)
-    else:
-        socketio.run(app, debug=False, host='0.0.0.0', port=5000)
-
-
-
-"""
-The following is for when running outside a container(starts server automagically when running file with python):
-
     if getenv('FLASK_ENV') == 'development':
         socketio.run(app, debug=True, host='0.0.0.0', port=5000)
     else:
@@ -177,5 +167,3 @@ The following is for when running outside a container(starts server automagicall
 
         }
         StandaloneApplication(app, options).run()
-        
-"""
