@@ -66,7 +66,7 @@ class objs: #class to manage ruuvitag objects
         for i in range(ntag):
             i = RuuviTag()
             self.tags.append(i)
-objectifier = objs()
+objectifier = objs() 
 
 
 
@@ -107,11 +107,11 @@ def request_data(): #only supports decoded data
         #update the generated objects with the received data
         for i in range(num_of_tags):
             objectifier.tags[i].updata(cleandata[i])
-        print(objectifier.tags[0].data)
+
         # Create packets with tag names
         packets = {}
         for i in range(len(objectifier.tags)):
-            packets[f"Tag {i}"] = objectifier.tags[i].data # name packets
+            packets[f"Tag {i}"] = objectifier.tags[i].data 
         
         print("Emitting data update: ", packets)
         socketio.emit('data_update', packets)
@@ -121,17 +121,21 @@ def request_data(): #only supports decoded data
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
-#command for gunicorn(for docker place in dockerfile CMD[]):
-#gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --bind 0.0.0.0:5000 app.app:app
+"""
+command for gunicorn(for docker place in dockerfile CMD[]):
+gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --bind 0.0.0.0:5000 app.app:app
+"""
 
 if __name__ == '__main__':
     if getenv('FLASK_ENV' == 'development'):
         socketio.run(app, debug=True, host='0.0.0.0', port=5000)
     else:
         socketio.run(app, debug=False, host='0.0.0.0', port=5000)
-        
+
+
+
 """
-The following is for when running outside a container:
+The following is for when running outside a container(starts server automagically when running file with python):
 
     if getenv('FLASK_ENV') == 'development':
         socketio.run(app, debug=True, host='0.0.0.0', port=5000)
