@@ -124,6 +124,8 @@ def request_data(): #only supports decoded data
         for i in range(len(objectifier.tags)):
             packets[f"Tag {i}"] = objectifier.tags[i].data 
 
+        datacollector(packets)
+
         socketio.emit('data_update', packets)
 
         return jsonify({"status": "success", "data": packets}), 200
