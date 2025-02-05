@@ -79,20 +79,19 @@ def request_data(): #only supports decoded data
         num_of_tags = len(tags) 
         tag_macs = tags.keys() #MAC addresses from the tags dictionary
 
-        #creating the ruuvitag objects
+
         if num_of_tags != len(objectifier.tags): #clear the objects if the amount of tags changes
             objectifier.empty()
-        if objectifier.tags == []: #if the list is empty i.e. no objects, create new objects
+        if not objectifier.tags: #if the list is empty i.e. no objects, create new objects
             objectifier.add(num_of_tags)
     
         for i, tag in enumerate(tag_macs):
-            objectifier.tags[i].updata(data['data']['tags'][tag])
+            objectifier.tags[i].updata(tags[tag])
 
-        # Create packets with tag names
+        # Create & send packets with tag names to connected clients
         packets = {}
         for i in range(len(objectifier.tags)):
             packets[f"Tag {i}"] = objectifier.tags[i].data 
-        
         socketio.emit('data_update', packets)
 
         return jsonify({"status": "success", "data": packets}), 200
