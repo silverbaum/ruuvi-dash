@@ -57,7 +57,6 @@ class objs: #class to manage ruuvitag objects
 objectifier = objs() 
 
 
-
 #redirect to dash
 @app.route('/')
 def redirecter():
@@ -75,26 +74,19 @@ def dashboard():
 @app.route('/request', methods=['POST'])
 def request_data(): #only supports decoded data
     try:
-        cleandata = {}
         data = request.get_json()
         tags = data['data']['tags']
         num_of_tags = len(tags) 
         tag_macs = tags.keys() #MAC addresses from the tags dictionary
-
 
         #creating the ruuvitag objects
         if num_of_tags != len(objectifier.tags): #clear the objects if the amount of tags changes
             objectifier.empty()
         if objectifier.tags == []: #if the list is empty i.e. no objects, create new objects
             objectifier.add(num_of_tags)
-
-        #create indexed data dictionary
-        for index, tag in enumerate(tag_macs):
-            cleandata[index] = data['data']['tags'][tag]
-        
-        #update the generated objects with the received data
-        for i in range(num_of_tags):
-            objectifier.tags[i].updata(cleandata[i])
+    
+        for i, tag in enumerate(tag_macs):
+            objectifier.tags[i].updata(data['data']['tags'][tag])
 
         # Create packets with tag names
         packets = {}
@@ -108,49 +100,14 @@ def request_data(): #only supports decoded data
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
-"""
-command for gunicorn(for docker place in dockerfile CMD[]):
-gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --bind 0.0.0.0:5000 app.app:app
-"""
-
 if __name__ == '__main__':
     if getenv('FLASK_ENV' == 'development'):
         socketio.run(app, debug=True, host='0.0.0.0', port=5000)
     else:
         socketio.run(app, debug=False, host='0.0.0.0', port=5000)
-
-
-
-"""
-The following is for when running outside a container(starts server automagically when running file with python):
-
-    if getenv('FLASK_ENV') == 'development':
-        socketio.run(app, debug=True, host='0.0.0.0', port=5000)
-    else:
-        from gunicorn.app.base import BaseApplication
-    
-
-        class StandaloneApplication(BaseApplication):
-            def __init__(self, app, options=None):
-                self.options = options or {}
-                self.application = app
-                super(StandaloneApplication, self).__init__()
-
-            def load_config(self):
-                config = {key: value for key, value in self.options.items()
-                          if key in self.cfg.settings and value is not None}
-                for key, value in config.items():
-                    self.cfg.set(key.lower(), value)
-
-            def load(self):
-                return self.application
-
-        options = {
-            'bind': '0.0.0.0:5002',
-            'workers': 1,
-            'worker_class': 'geventwebsocket.gunicorn.workers.GeventWebSocketWorker'
-
-        }
-        StandaloneApplication(app, options).run()
         
+        
+"""
+command for gunicorn(for docker place in dockerfile CMD[]):
+gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --bind 0.0.0.0:5000 app.app:app
 """
