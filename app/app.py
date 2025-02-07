@@ -33,22 +33,15 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
 class Tags: #class to manage ruuvitag objects
     def __init__(self):
         self.tags={}
-        self.data = {
-	  "temperature": 0,
-	  "humidity": 0,
-	  "pressure": 0 
-      }
     def empty(self):
         self.tags = {}
-    def add(self, ntag):
-        for i in range(ntag):
-            self.tags[i] = self.data
-
-    def updata(self, data, index):
-        self.tags[index] = ({
+    def updata(self, data, mac=0):
+        macs = data.get('id')
+        self.tags[macs] = ({
         "temperature": data.get('temperature', 0),
         "humidity": data.get('humidity', 0),
-        "pressure": (data.get('pressure', 0)/1000)}
+        "pressure": (data.get('pressure', 0)/1000),
+        "mac" : data.get('id', 0)}
         )
 objs = Tags() 
 
@@ -62,8 +55,8 @@ def redirecter():
 @app.route('/dashboard')
 def dashboard():
     data = {}
-    for i in objs.tags: # creates indexed list of objs (0, obj[0]), (1, obj[1])
-        data[f"Tag {i}"] = objs.tags[i]
+    for i, tag in enumerate(objs.tags): # creates indexed list of objs (0, obj[0]), (1, obj[1])
+        data[f"{i}"] = objs.tags[tag]
     return render_template('dashboard.html', data=data)
 
 #data route
@@ -77,16 +70,12 @@ def request_data(): #only supports decoded data
 
         if num_of_tags != len(objs.tags): #clear the objects if the amount of tags changes
             objs.empty()
-        if not objs.tags: #if the list is empty i.e. no objects, create new objects
-            objs.add(num_of_tags)
 
         for i, tag in enumerate(tag_macs):
-           objs.updata(tags[tag], i)
+           objs.updata(tags[tag])
 
-        # Create & send packets with tag names to connected clients
-        packets = {}
-        for tag in objs.tags:
-            packets[f"Tag {tag}"] = objs.tags[tag]
+        # Create & send numbered data packets to connected clients
+        packets = {tag:val for (tag, val) in enumerate(objs.tags.values())}
         socketio.emit('data_update', packets)
 
         return jsonify({"status": "success", "data": packets}), 200
@@ -100,7 +89,6 @@ if __name__ == '__main__':
     else:
         socketio.run(app, debug=False, host='0.0.0.0', port=5000)
         
-
 """
 command for gunicorn(for docker place in dockerfile CMD[]):
 gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --bind 0.0.0.0:5000 app.app:app
