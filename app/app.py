@@ -29,32 +29,28 @@ from os import getenv
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
 
-
-#RuuviTag object class
-class RuuviTag:
- def __init__(self):
-      self.data = {
+      
+class Tags: #class to manage ruuvitag objects
+    def __init__(self):
+        self.tags={}
+        self.data = {
 	  "temperature": 0,
 	  "humidity": 0,
-	  "pressure": 0
-	  }
- def updata(self, data):
-      self.data.update({
-	  "temperature": data.get('temperature', 0),
-	  "humidity": data.get('humidity', 0),
-	  "pressure": (data.get('pressure', 0)/1000)}
-	  )
-      
-class objs: #class to manage ruuvitag objects
-    def __init__(self):
-        self.tags=[]
+	  "pressure": 0 
+      }
     def empty(self):
-        self.tags = []
+        self.tags = {}
     def add(self, ntag):
         for i in range(ntag):
-            i = RuuviTag()
-            self.tags.append(i)
-objectifier = objs() 
+            self.tags[i] = self.data
+
+    def updata(self, data, index):
+        self.tags[index] = ({
+        "temperature": data.get('temperature', 0),
+        "humidity": data.get('humidity', 0),
+        "pressure": (data.get('pressure', 0)/1000)}
+        )
+objs = Tags() 
 
 
 #redirect to dash
@@ -66,8 +62,8 @@ def redirecter():
 @app.route('/dashboard')
 def dashboard():
     data = {}
-    for i, obj in enumerate(objectifier.tags): # creates indexed list of objs (0, obj[0]), (1, obj[1])
-        data[f"Tag {i}"] = obj.data 
+    for i in objs.tags: # creates indexed list of objs (0, obj[0]), (1, obj[1])
+        data[f"Tag {i}"] = objs.tags[i]
     return render_template('dashboard.html', data=data)
 
 #data route
@@ -79,19 +75,18 @@ def request_data(): #only supports decoded data
         num_of_tags = len(tags) 
         tag_macs = tags.keys() #MAC addresses from the tags dictionary
 
+        if num_of_tags != len(objs.tags): #clear the objects if the amount of tags changes
+            objs.empty()
+        if not objs.tags: #if the list is empty i.e. no objects, create new objects
+            objs.add(num_of_tags)
 
-        if num_of_tags != len(objectifier.tags): #clear the objects if the amount of tags changes
-            objectifier.empty()
-        if not objectifier.tags: #if the list is empty i.e. no objects, create new objects
-            objectifier.add(num_of_tags)
-    
         for i, tag in enumerate(tag_macs):
-            objectifier.tags[i].updata(tags[tag])
+           objs.updata(tags[tag], i)
 
         # Create & send packets with tag names to connected clients
         packets = {}
-        for i in range(len(objectifier.tags)):
-            packets[f"Tag {i}"] = objectifier.tags[i].data 
+        for tag in objs.tags:
+            packets[f"Tag {tag}"] = objs.tags[tag]
         socketio.emit('data_update', packets)
 
         return jsonify({"status": "success", "data": packets}), 200
@@ -105,7 +100,7 @@ if __name__ == '__main__':
     else:
         socketio.run(app, debug=False, host='0.0.0.0', port=5000)
         
-        
+
 """
 command for gunicorn(for docker place in dockerfile CMD[]):
 gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1 --bind 0.0.0.0:5000 app.app:app
