@@ -29,8 +29,8 @@ from os import getenv
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
 
-      
-class Tags: #class to manage ruuvitag objects
+class Tags:
+    """Class to manage ruuvitag data"""
     def __init__(self):
         self.tags={}
     def empty(self):
@@ -40,11 +40,9 @@ class Tags: #class to manage ruuvitag objects
         self.tags[macs] = ({
         "temperature": data.get('temperature', 0),
         "humidity": data.get('humidity', 0),
-        "pressure": (data.get('pressure', 0)/1000),
-        "mac" : data.get('id', 0)}
+        "pressure": (data.get('pressure', 0)/1000)}
         )
 objs = Tags() 
-
 
 #redirect to dash
 @app.route('/')
@@ -61,20 +59,25 @@ def dashboard():
 
 #data route
 @app.route('/request', methods=['POST'])
-def request_data(): #only supports decoded data
+def request_data():
+    """Receives gateway data in json and sends processed data to clients with SocketIO
+    
+    Currently only supports decoded data. (data format 5 in gw json)
+    The data is 'saved' in an instance of the Tags class.
+    
+    """
     try:
         data = request.get_json()
         tags = data['data']['tags']
         num_of_tags = len(tags) 
-        tag_macs = tags.keys() #MAC addresses from the tags dictionary
+        tag_macs = tags.keys()
 
-        if num_of_tags != len(objs.tags): #clear the objects if the amount of tags changes
+        if num_of_tags != len(objs.tags): 
             objs.empty()
 
-        for i, tag in enumerate(tag_macs):
+        for tag in tag_macs:
            objs.updata(tags[tag])
 
-        # Create & send numbered data packets to connected clients
         packets = {tag:val for (tag, val) in enumerate(objs.tags.values())}
         socketio.emit('data_update', packets)
 
