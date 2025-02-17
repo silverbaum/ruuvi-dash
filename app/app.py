@@ -1,8 +1,6 @@
 #SPDX-FileCopyrightText: 2025 Topias Silfverhuth
 #SPDX-License-Identifier: MIT
 
-from gevent import monkey
-monkey.patch_all()
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_socketio import SocketIO
 
