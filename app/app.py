@@ -13,7 +13,7 @@ class Tags:
         self.tags={}
     def empty(self):
         self.tags = {}
-    def updata(self, data, mac=0):
+    def updata(self, data):
         macs = data.get('id')
         self.tags[macs] = ({
         "temperature": data.get('temperature', 0),
