@@ -147,6 +147,13 @@
         .dark-mode .table tbody tr:hover {
             background-color: #2c3e50;
         }
+        .link {
+            color:#121212;
+            font-size: large;
+            text-decoration:underline;
+            text-align: end;
+            
+        }
     </style>
 </head>
 <body>
@@ -154,6 +161,8 @@
         <div class="dashboard-header">
             <h1>Dashboard</h1>
             <div id="connection-status" class="status-indicator disconnected"></div>
+            <div><span></span></div>
+            <a href="/graph/temperature" class="link">Graph</a>
         </div>
         <table class="table">
             <thead>

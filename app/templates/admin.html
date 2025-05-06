@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+
+        
+    </head>
+    <body>
+
+        <div class="center container">
+            <form id="del">
+
+                <label for="pass">Super secret password:</label>
+                <input type="text" id="pass" name="pass"><br>
+                
+                <label for="weeks">Delete data older than:</label>
+                <input type="number" id="weeks" name="weeks">
+                <label>weeks</label>
+                <input type="submit">
+            </form>
+
+            <div id="thankyou">
+                
+            </div>
+            <script>
+                const form = document.querySelector("#del");
+                const ty = document.getElementById("thankyou");
+    
+                function thanks(){
+                    const txt = document.createElement('h1');
+                    txt.innerHTML = `
+                    Success!
+                    `;
+                    ty.append(txt);
+                    localStorage.setItem("input", "true");
+                }
+                form.addEventListener("submit", thanks);
+                function thx(){
+                    if (localStorage.getItem("input") == "true") {
+                        thanks();
+                        localStorage.clear();
+                    }
+                }
+                window.onload = thx;
+            </script>
+        </div>
+    </body>
+</html>

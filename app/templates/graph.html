@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <head>
+       
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script type="module" src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@latest/dist/turbo.es2017-esm.min.js"></script>
+        <style>
+            body {
+                display: grid;
+            }
+            .graph {
+                margin: auto;
+                padding: 10px;
+                width: 90%;
+            }
+            .title {
+                text-align: center;
+                align-items: center;
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+                padding-top:12px;
+                padding-bottom: 12px;
+                
+
+            }
+            
+            .headeritem {
+                background-color: #000000;
+                padding: 14px;
+                letter-spacing: 0px;
+                text-shadow: none;
+                text-decoration: none;
+                cursor:crosshair;
+                color: pink
+            }
+            .headeritemhover {
+                background-color: #FFCBE1;
+                color:#000000;
+                padding: 14px;
+                cursor:crosshair;
+                text-decoration: none;
+                
+            }
+            .headeritemclick {
+                color:pink;
+                background-color: #000000;
+            }
+            .home {
+                font-size: 24px;
+                padding:5px;
+                background-color: white;
+                align-items: center;
+
+            }
+
+        </style>
+        <script>
+            function init()
+            {
+                var headers = [document.getElementById("temp"), document.getElementById("hum"), document.getElementById("pres"), document.getElementById("table")];
+                headers.forEach(hdr => {
+                    if(hdr) {
+                    hdr.onmouseover = function() {
+                    hdr.classList.replace("headeritem", "headeritemhover");
+                    }
+                    hdr.onmouseleave = function() {
+                        hdr.classList.replace("headeritemhover", "headeritem");
+                    }
+                    hdr.onmousedown = function() {
+                        hdr.classList.add("headeritemclick");
+                    }
+                    hdr.onmouseout = function() {
+                        hdr.classList.remove("headeritemclick");
+                    }
+                    }
+                });
+            }
+            //document.documentElement.addEventListener("turbo:visit", init);
+            //document.addEventListener("turbo:before-render", init);
+            window.onload = init;
+            document.addEventListener("turbo:load", init);
+
+        </script>
+    </head>
+    <body>
+        <header>
+
+
+            <div class="center title">
+                <a href="/dashboard" data-turbo="false" class="home" id="table"><span> &#8592; table</span></a>
+                <a href="/graph/temperature" class="headeritem" id="temp">Temperature</a>
+                <a href="/graph/humidity" class="headeritem" id="hum">Humidity</a>
+                <a href="/graph/pressure" class="headeritem" id="pres">Pressure</a>
+
+            </div>
+            <div class="title">
+                <div>
+                    <form>
+                        <label for="weeks">Weeks:</label>
+                        <input type="number" id="weeks" name="weeks">
+                    </form>
+                </div>
+            </div>
+        </header>
+       
+
+
+        <div class="container-fluid graph">
+            <canvas id="myChart"></canvas>
+        </div>
+
+        <script>
+            var ctx = document.getElementById("myChart");
+
+            console.log({{values}});
+            var lab = {{labels | safe}};
+
+
+            var data = {
+                labels: lab,
+                datasets: [{
+                    label: 'tag 0',
+                    data: {{values}},
+                    fill: false,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                },
+                {
+                    label: 'tag 1',
+                    data: {{values_1}},
+                    fill: false,
+                    borderColor: 'rgb(65, 162, 162)',
+                    tension: 0.1
+                }]
+            };
+            new Chart(ctx, {
+                type: "line", 
+                data: data
+            });
+
+        </script>
+    </body>
+</html>
