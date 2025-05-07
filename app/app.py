@@ -20,6 +20,7 @@ dbconn.commit()
 
 updata_counter: int = 0
 
+tag_names = []
 RTags = {}
 
 def update_database():
@@ -60,6 +61,7 @@ def update_data(data):
 
 @app.route("/graph/<item>")
 def graph(item):
+    global tag_names
     try:
         weeks = request.args.get('weeks', 1, type=int)
         if weeks == 0:
@@ -73,8 +75,7 @@ def graph(item):
         all_tags = []
         
         for id, group in df:
-            dates = pd.to_datetime(group.date, errors='coerce').dt.strftime("%H:%M").tolist()
-            print(pd.to_datetime(group.date, errors='coerce').dt.strftime("%H:%M").unique().tolist())
+            dates = pd.to_datetime(group.date, errors='coerce').dt.strftime("%d/%m %H:%M").tolist()
             if item == "humidity":
                 values = group.humidity.tolist()
             elif item == "pressure":
@@ -84,7 +85,11 @@ def graph(item):
                 
             all_dates.append(dates)
             all_values.append(values)
-            all_tags.append(f"tag {id}")
+            if tag_names and len(tag_names) > int(id):
+                if tag_names[int(id)] != "":
+                    all_tags.append(tag_names[int(id)])
+            else:
+                all_tags.append(f"tag {id}")
         
         if not len(all_dates):
             return render_template("graph.html")
@@ -109,13 +114,30 @@ def graph_redirect():
 
 @app.route("/supersecretadmin")
 def admin():
+    global tag_names
+    
+
+    names = []
+    for i in range(len(RTags)):
+        names.append(request.args.get(f"tag{i}", "", type=str))
+        #log.debug(request.args.get(f"tag{i}", "", type=str))
+
+    for i, name in enumerate(names):
+        if name != "":
+            if len(tag_names) > i:
+                tag_names[i] = name
+            else:
+                log.debug(f"appending {name}")
+                tag_names.append(name)
+   
+    
     passwd: str = request.args.get("pass", type=str)
     weeks: int = request.args.get("weeks", type=int)
     if passwd == "javasdk8" and weeks >= 0:
         try:
             cur.execute(f"DELETE FROM data WHERE date < datetime('now', '-{weeks*7} days');")
             dbconn.commit()
-            log.info("successfully deleted data older than", weeks, "weeks")
+            log.info(f"successfully deleted data older than {weeks} weeks")
         except Exception as e:
             log.error(e)
             return jsonify({"status": "error", "message": str(e)}), 500
