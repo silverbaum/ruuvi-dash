@@ -50,7 +50,7 @@ def update_data(data):
     packets = {tag:val for (tag, val) in enumerate(RTags.values())}
 
     updata_counter += 1
-    if updata_counter > 25:
+    if updata_counter > 2:
         update_database()
         updata_counter = 0
     socketio.emit('data_update', packets)
@@ -60,26 +60,47 @@ def update_data(data):
 
 @app.route("/graph/<item>")
 def graph(item):
-    weeks = request.args.get('weeks', 1, type=int)
-    data = {}
-    df = pd.read_sql(f"SELECT * FROM data where date > datetime('now', '-{weeks*7} days');", dbconn, index_col=None).groupby('id')
-    for id, group in df:
-        date = pd.to_datetime(group.date, errors='coerce').dt.strftime("%H:%M").to_list()
-        log.debug(date)
-        if item == "humidity":
-            data[str(id)] = {"date": date, "humidity": group.humidity.tolist()}
-        elif item == "pressure":
-            data[str(id)] = {"date": date, "pressure": group.pressure.tolist()}
+    try:
+        weeks = request.args.get('weeks', 1, type=int)
+        if weeks == 0:
+            df = pd.read_sql(f"SELECT * FROM data where date > datetime('now', '-1 days');", dbconn, index_col=None).groupby('id')
         else:
-            data[str(id)] = {"date": date, "temperature": group.temperature.tolist()}
-        #print(group.temperature.tolist())
-    log.debug(data)
-
-    if not len(data):
-        return render_template("graph.html")
-    elif not item or (item != "humidity" and item != "pressure" and item != "temperature"):
-        return render_template("graph.html", labels=data['0']['date'], values=data['0']["temperature"], values_1=data['1']["temperature"])
-    return render_template("graph.html", labels=data['0']['date'], values=data['0'][str(item)], values_1=data['1'][str(item)])
+            df = pd.read_sql(f"SELECT * FROM data where date > datetime('now', '-{weeks*7} days');", dbconn, index_col=None).groupby('id')
+        
+        # Initialize lists to store all data
+        all_dates = []
+        all_values = []
+        all_tags = []
+        
+        for id, group in df:
+            dates = pd.to_datetime(group.date, errors='coerce').dt.strftime("%H:%M").tolist()
+            print(pd.to_datetime(group.date, errors='coerce').dt.strftime("%H:%M").unique().tolist())
+            if item == "humidity":
+                values = group.humidity.tolist()
+            elif item == "pressure":
+                values = group.pressure.tolist()
+            else:
+                values = group.temperature.tolist()
+                
+            all_dates.append(dates)
+            all_values.append(values)
+            all_tags.append(f"tag {id}")
+        
+        if not len(all_dates):
+            return render_template("graph.html")
+        elif not item or (item != "humidity" and item != "pressure" and item != "temperature"):
+            return render_template("graph.html", 
+                                labels=all_dates[0] if all_dates else [],
+                                all_values=all_values,
+                                all_tags=all_tags)
+        
+        return render_template("graph.html", 
+                            labels=all_dates[0] if all_dates else [],
+                            all_values=all_values,
+                            all_tags=all_tags)
+    except Exception as e:
+        log.error(e)
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route("/graph")
 @app.route("/graph/")

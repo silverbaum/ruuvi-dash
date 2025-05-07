@@ -5,6 +5,8 @@
        
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.20.1/moment.min.js"></script>
+        <link rel="shortcut icon" href="/static/favicon.png">
         <script type="module" src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@latest/dist/turbo.es2017-esm.min.js"></script>
         <style>
             body {
@@ -113,32 +115,50 @@
         <script>
             var ctx = document.getElementById("myChart");
 
-            console.log({{values}});
+            
             var lab = {{labels | safe}};
+            var allValues = {{all_values | safe}};
+            var allTags = {{all_tags | safe}};
 
+            
+            function getColor(index) {
+                const colors = [
+                    'rgb(75, 192, 192)',  
+                    'rgb(65, 162, 162)',  
+                    'rgb(255, 99, 132)',   
+                    'rgb(54, 162, 235)',  
+                    'rgb(255, 206, 86)',   
+                    'rgb(153, 102, 255)',
+                    'rgb(255, 61, 61)'
+                ];
+                return colors[index % colors.length];
+            }
+
+            // Create datasets dynamically
+            var datasets = allValues.map((values, index) => ({
+                label: allTags[index],
+                data: values,
+                fill: false,
+                borderColor: getColor(index),
+                tension: 0.1
+            }));
 
             var data = {
                 labels: lab,
-                datasets: [{
-                    label: 'tag 0',
-                    data: {{values}},
-                    fill: false,
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
-                },
-                {
-                    label: 'tag 1',
-                    data: {{values_1}},
-                    fill: false,
-                    borderColor: 'rgb(65, 162, 162)',
-                    tension: 0.1
-                }]
+                datasets: datasets
             };
+
             new Chart(ctx, {
                 type: "line", 
-                data: data
+                data: data,
+                options: {
+                    scales: {
+                    xAxes: [{
+                        type: 'time'
+                    }]
+                    }
+                }
             });
-
         </script>
     </body>
 </html>
