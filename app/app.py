@@ -51,7 +51,7 @@ def update_data(data):
     packets = {tag:val for (tag, val) in enumerate(RTags.values())}
 
     updata_counter += 1
-    if updata_counter > 2:
+    if updata_counter > 25:
         update_database()
         updata_counter = 0
     socketio.emit('data_update', packets)
