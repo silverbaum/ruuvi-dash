@@ -32,15 +32,30 @@
         }
 
         .sidebar.collapsed {
-            width: 60px;
+            width: 70px;
             padding: 20px 10px;
         }
 
-        .sidebar.collapsed .sidebar-header h3,
         .sidebar.collapsed .nav-link span,
+        .sidebar.collapsed .sidebar-header h3,
         .sidebar.collapsed .dark-mode-toggle,
         .sidebar.collapsed .title {
-            display: none;
+            display: flex;
+            font-size: 0.7rem;
+            text-align:left;
+            overflow:visible;
+            white-space: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        body.mobile-view .sidebar .sidebar-header h3,
+        body.mobile-view .sidebar .nav-link span,
+        body.mobile-view .sidebar .title {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.7rem;
         }
 
         .sidebar-toggle {
@@ -308,7 +323,7 @@
         }
         
         /* Mobile responsive adjustments */
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .sidebar {
                 width: 200px;
             }
@@ -329,6 +344,14 @@
             
             .graph {
                 height: 60vh;
+            }
+            body.mobile-view .sidebar .sidebar-header h3,
+            body.mobile-view .sidebar .nav-link span,
+            body.mobile-view .sidebar .title {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 0.7rem;
             }
         }
         
@@ -365,7 +388,10 @@
             body.mobile-view .sidebar .sidebar-header h3,
             body.mobile-view .sidebar .nav-link span,
             body.mobile-view .sidebar .title {
-                display: none;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 0.7rem;
             }
             
             body.mobile-view .main-content {
@@ -392,6 +418,14 @@
             .main-content {
                 padding-top: 10px;
             }
+            body.mobile-view .sidebar .sidebar-header h3,
+            body.mobile-view .sidebar .nav-link span,
+            body.mobile-view .sidebar .title {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 0.7rem;
+            }
         }
     </style>
     </head>
@@ -406,11 +440,10 @@
         </div>
         <nav>
             <a href="/dashboard" class="nav-link" data-turbo-action="disable" data-turbo="false">
-                <span>Dashboard</span>
+                <span>Dash</span>
             </a>
-            <span class="title">Graph:</span>
             <a href="/graph/temperature" class="nav-link active" data-turbo-frame="main">
-                <span>Temperature</span>
+                <span>Temp</span>
             </a>
             <a href="/graph/humidity" class="nav-link" data-turbo-frame="main">
                 <span>Humidity</span>
@@ -554,14 +587,16 @@
             }
         }
 
-        window.onload = function() {
+        function onload (){
             if (localStorage.getItem("darkMode") === "true") {
                 document.body.classList.add("dark-mode");
                 document.getElementById("darkModeSwitch").checked = true;
             }
-            
+            const sidebar = document.querySelector('.sidebar')
             // Restore sidebar state
-            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+            if (localStorage.getItem('sidebarCollapsed') === 'true' && !sidebar.classList.contains('collapsed')) {
+                toggleSidebar();
+            } else if (localStorage.getItem('sidebarCollapsed') === 'false' && sidebar.classList.contains('collapsed')) {
                 toggleSidebar();
             }
             
@@ -571,6 +606,9 @@
             // Listen for window resize to handle orientation changes
             window.addEventListener('resize', checkMobileDevice);
         }
+        window.onload = onload;
+        window.addEventListener('turbo:load', onload);
+        window.addEventListener('resize', checkMobileDevice);
     </script>
 </body>
 </html>

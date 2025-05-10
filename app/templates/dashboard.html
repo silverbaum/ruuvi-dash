@@ -184,15 +184,27 @@
         }
 
         .sidebar.collapsed {
-            width: 60px;
+            width: 70px;
             padding: 20px 10px;
         }
 
         .sidebar.collapsed .sidebar-header h3,
-        .sidebar.collapsed .nav-link span,
         .sidebar.collapsed .dark-mode-toggle,
         .sidebar.collapsed .title {
-            display: none;
+            display: flex;
+            font-size: 0.7rem;
+            text-align: left;
+            justify-content: center;
+        }
+        .sidebar.collapsed .nav-link span,
+        body.mobile-view .sidebar .sidebar-header h3,
+        body.mobile-view .sidebar .nav-link span,
+        body.mobile-view .sidebar .title {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow:visible;
+            font-size: 0.7rem;
         }
 
 
@@ -326,7 +338,10 @@
             body.mobile-view .sidebar .sidebar-header h3,
             body.mobile-view .sidebar .nav-link span,
             body.mobile-view .sidebar .title {
-                display: none;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 0.7rem;
             }
             
             body.mobile-view .main-content {
@@ -346,11 +361,10 @@
         </div>
         <nav>
             <a href="/dashboard" class="nav-link active" >
-                <span>Dashboard</span>
+                <span>Dash</span>
             </a>
-            <span class="title">Graph:</span>
             <a href="/graph/temperature" class="nav-link" >
-                <span>Temperature</span>
+                <span>Temp</span>
             </a>
             <a href="/graph/humidity" class="nav-link" >
                 <span>Humidity</span>

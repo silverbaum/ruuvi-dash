@@ -65,10 +65,13 @@ def graph(item):
     try:
         timevalue = request.args.get('value', 1, type=int)
         interval = request.args.get('interval', 'weeks', type=str)
+        log.debug(f"item: {item}, timevalue: {timevalue}, interval: {interval}")
+
 
         df = pd.read_sql(f"SELECT * FROM data where date > datetime('now', '-{timevalue*7 if interval == "weeks" else timevalue} days');",\
                           dbconn, index_col=None).groupby('id')
-
+        for id, obj in df:
+            log.debug(obj)
 
         
         # Initialize lists to store all data
@@ -93,18 +96,17 @@ def graph(item):
             else:
                 all_tags.append(f"tag {id}")
         
-        if not len(all_dates):
-            return render_template("graph.html")
-        elif not item or (item != "humidity" and item != "pressure" and item != "temperature"):
+
+        if not item or (item != "humidity" and item != "pressure" and item != "temperature"):
             return render_template("graph.html", 
                                 labels=all_dates[0] if all_dates else [],
-                                all_values=all_values,
-                                all_tags=all_tags)
+                                all_values=all_values if all_values else [],
+                                all_tags=all_tags if all_tags else [])
         
         return render_template("graph.html", 
                             labels=all_dates[0] if all_dates else [],
-                            all_values=all_values,
-                            all_tags=all_tags)
+                            all_values=all_values if all_values else [],
+                            all_tags=all_tags if all_tags else [],)
     except Exception as e:
         log.error(e)
         return jsonify({"status": "error", "message": str(e)}), 500
