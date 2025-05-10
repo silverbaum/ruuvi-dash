@@ -1,164 +1,576 @@
 <!DOCTYPE html>
 <html lang="en">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <head>
-       
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.20.1/moment.min.js"></script>
-        <link rel="shortcut icon" href="/static/favicon.png">
-        <script type="module" src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@latest/dist/turbo.es2017-esm.min.js"></script>
-        <style>
-            body {
-                display: grid;
-            }
-            .graph {
-                margin: auto;
-                padding: 10px;
-                width: 90%;
-            }
-            .title {
-                text-align: center;
-                align-items: center;
-                font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-                padding-top:12px;
-                padding-bottom: 12px;
-                
+    <title>Graph</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.20.1/moment.min.js"></script>
+    <link rel="shortcut icon" href="/static/favicon.png">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@latest/dist/turbo.es2017-esm.min.js"></script>
+    <style>
+        /* Sidebar styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            background-color: #f8f9fa;
+            padding: 20px;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto; /* Make sidebar scrollable */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
 
+        .dark-mode .sidebar {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+        }
+
+        .sidebar.collapsed {
+            width: 60px;
+            padding: 20px 10px;
+        }
+
+        .sidebar.collapsed .sidebar-header h3,
+        .sidebar.collapsed .nav-link span,
+        .sidebar.collapsed .dark-mode-toggle,
+        .sidebar.collapsed .title {
+            display: none;
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            top: 20px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode .sidebar-toggle {
+            background-color: #2c3e50;
+            border-color: #34495e;
+            color: #ecf0f1;
+        }
+
+        .sidebar-toggle:hover {
+            background-color: #e9ecef;
+        }
+
+        .dark-mode .sidebar-toggle:hover {
+            background-color: #34495e;
+        }
+
+        .sidebar-header {
+            padding: 20px 0;
+            text-align: center;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+
+        .dark-mode .sidebar-header {
+            border-bottom-color: #34495e;
+        }
+
+        .nav-link {
+            color: #495057;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode .nav-link {
+            color: #ecf0f1;
+        }
+
+        .nav-link:hover {
+            background-color: #e9ecef;
+            text-decoration: none;
+        }
+
+        .dark-mode .nav-link:hover {
+            background-color: #34495e;
+        }
+
+        .nav-link.active {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .dark-mode .nav-link.active {
+            background-color: #2980b9;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 60px;
+        }
+
+        .graph {
+            margin: auto;
+            padding: 10px;
+            width: 100%;
+            height: 70vh;
+            position: relative;
+        }
+
+        .title {
+            text-align: center;
+            align-items: center;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+
+        /* Dark mode styles */
+        .dark-mode {
+            background-color: #121212;
+            color: #fff;
+        }
+
+        /* Toggle switch styles */
+        .toggle-switch {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-left: 10px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .time-range-buttons {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .time-range-btn {
+            padding: 8px 16px;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .dark-mode .time-range-btn {
+            background-color: #2c3e50;
+            border-color: #34495e;
+            color: #ecf0f1;
+        }
+
+        .time-range-btn:hover {
+            background-color: #e9ecef;
+            text-decoration: none;
+        }
+
+        .dark-mode .time-range-btn:hover {
+            background-color: #34495e;
+        }
+        
+        .time-controls-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 0 15px;
+        }
+        
+        .time-controls-container .time-range-buttons {
+            margin-bottom: 0;
+            flex: 1;
+            justify-content: flex-start;
+        }
+        
+        .time-controls-container .interval-form {
+            margin: 0;
+            min-width: 180px;
+        }
+        
+        .interval-select {
+            margin-left: 10px;
+            padding: 4px;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            color: #495057;
+        }
+        
+        .dark-mode .interval-select {
+            background-color: #2c3e50;
+            border-color: #34495e;
+            color: #ecf0f1;
+        }
+
+        .interval-form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+            min-width: 160px;
+            background-color: rgba(248, 249, 250, 0.7);
+            padding: 5px 10px;
+            border-radius: 4px;
+            width: fit-content;
+            margin: 0 auto 15px;
+        }
+        
+        .dark-mode .interval-form {
+            background-color: rgba(44, 62, 80, 0.7);
+        }
+        
+        .interval-form input {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            color: #495057;
+            text-align: center;
+            margin-right: 5px;
+        }
+        
+        .dark-mode .interval-form input {
+            background-color: #2c3e50;
+            border-color: #34495e;
+            color: #ecf0f1;
+        }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
             }
             
-            .headeritem {
-                background-color: #000000;
-                padding: 14px;
-                letter-spacing: 0px;
-                text-shadow: none;
-                text-decoration: none;
-                cursor:crosshair;
-                color: pink
+            .main-content {
+                margin-left: 200px;
+                padding: 15px;
             }
-            .headeritemhover {
-                background-color: #FFCBE1;
-                color:#000000;
-                padding: 14px;
-                cursor:crosshair;
-                text-decoration: none;
-                
+            
+            .main-content.expanded {
+                margin-left: 60px;
             }
-            .headeritemclick {
-                color:pink;
-                background-color: #000000;
+            
+            .time-range-btn {
+                padding: 6px 12px;
+                font-size: 0.9rem;
             }
-            .home {
-                font-size: 24px;
-                padding:5px;
-                background-color: white;
-                align-items: center;
-
+            
+            .graph {
+                height: 60vh;
             }
-
-        </style>
-        <script>
-            function init()
-            {
-                var headers = [document.getElementById("temp"), document.getElementById("hum"), document.getElementById("pres"), document.getElementById("table")];
-                headers.forEach(hdr => {
-                    if(hdr) {
-                    hdr.onmouseover = function() {
-                    hdr.classList.replace("headeritem", "headeritemhover");
-                    }
-                    hdr.onmouseleave = function() {
-                        hdr.classList.replace("headeritemhover", "headeritem");
-                    }
-                    hdr.onmousedown = function() {
-                        hdr.classList.add("headeritemclick");
-                    }
-                    hdr.onmouseout = function() {
-                        hdr.classList.remove("headeritemclick");
-                    }
-                    }
-                });
+        }
+        
+        @media (max-width: 576px) {
+            .sidebar {
+                width: 180px;
             }
-            //document.documentElement.addEventListener("turbo:visit", init);
-            //document.addEventListener("turbo:before-render", init);
-            window.onload = init;
-            document.addEventListener("turbo:load", init);
-
-        </script>
+            
+            .main-content {
+                margin-left: 180px;
+                padding: 10px;
+            }
+            
+            .toggle-switch {
+                bottom: 10px;
+                right: 10px;
+            }
+            
+            .time-range-buttons {
+                margin-top: 10px;
+            }
+            
+            .graph {
+                height: 50vh;
+                padding: 5px;
+            }
+            
+            /* Auto-collapse sidebar on small screens */
+            body.mobile-view .sidebar {
+                width: 60px;
+                padding: 20px 10px;
+            }
+            
+            body.mobile-view .sidebar .sidebar-header h3,
+            body.mobile-view .sidebar .nav-link span,
+            body.mobile-view .sidebar .title {
+                display: none;
+            }
+            
+            body.mobile-view .main-content {
+                margin-left: 60px;
+            }
+        }
+        
+        /* Landscape mode improvements */
+        @media (max-height: 500px) {
+            .title {
+                padding-top: 5px;
+                padding-bottom: 5px;
+            }
+            
+            .time-controls-container {
+                margin-bottom: 10px;
+            }
+            
+            .graph {
+                height: 70vh;
+                max-height: 300px;
+            }
+            
+            .main-content {
+                padding-top: 10px;
+            }
+        }
+    </style>
     </head>
-    <body>
-        <header>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-toggle" onclick="toggleSidebar()">
+            <span id="toggle-icon">&#9776;</span>
+        </div>
+        <div class="sidebar-header">
+            <h3>Ruuvi Dashboard</h3>
+        </div>
+        <nav>
+            <a href="/dashboard" class="nav-link" data-turbo-action="disable" data-turbo="false">
+                <span>Dashboard</span>
+            </a>
+            <span class="title">Graph:</span>
+            <a href="/graph/temperature" class="nav-link active" data-turbo-frame="main">
+                <span>Temperature</span>
+            </a>
+            <a href="/graph/humidity" class="nav-link" data-turbo-frame="main">
+                <span>Humidity</span>
+            </a>
+            <a href="/graph/pressure" class="nav-link" data-turbo-frame="main">
+                <span>Pressure</span>
+            </a>
+        </nav>
+        <!-- Dark mode toggle switch -->
+        <div class="dark-mode-toggle">
+            <label for="darkModeSwitch">Dark Mode:</label>
+            <label class="switch">
+                <input type="checkbox" id="darkModeSwitch" onclick="toggleDarkMode()">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
 
-
-            <div class="center title">
-                <a href="/dashboard" data-turbo="false" class="home" id="table"><span> &#8592; table</span></a>
-                <a href="/graph/temperature" class="headeritem" id="temp">Temperature</a>
-                <a href="/graph/humidity" class="headeritem" id="hum">Humidity</a>
-                <a href="/graph/pressure" class="headeritem" id="pres">Pressure</a>
-
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="time-controls-container">
+            <div class="time-range-buttons">
+                <a href="?value=4&interval=weeks" class="time-range-btn">1 Month</a>
+                <a href="?value=12&interval=weeks" class="time-range-btn">3 Months</a>
+                <a href="?value=24&interval=weeks" class="time-range-btn">6 Months</a>
             </div>
-            <div class="title">
-                <div>
-                    <form>
-                        <label for="weeks">Weeks:</label>
-                        <input type="number" id="weeks" name="weeks">
-                    </form>
-                </div>
+            <div class="interval-form">
+                <form>
+                    <input type="number" id="weeks" name="value" min="0" placeholder="Value">
+                    <select name="interval" class="interval-select" onchange="this.form.submit()">
+                        <option value="weeks" {% if request.args.get('interval', 'weeks') == 'weeks' %}selected{% endif %}>weeks</option>
+                        <option value="days" {% if request.args.get('interval') == 'days' %}selected{% endif %}>days</option>
+                    </select>
+                </form>
             </div>
-        </header>
-       
-
+        </div>
 
         <div class="container-fluid graph">
             <canvas id="myChart"></canvas>
         </div>
+    </div>
 
-        <script>
-            var ctx = document.getElementById("myChart");
+    <script>
+        var ctx = document.getElementById("myChart");
+        var lab = {{ labels | tojson | safe }};
+        var allValues = {{ all_values | tojson | safe }};
+        var allTags = {{ all_tags | tojson | safe }};
 
-            
-            var lab = {{labels | safe}};
-            var allValues = {{all_values | safe}};
-            var allTags = {{all_tags | safe}};
+        function getColor(index) {
+            const colors = [
+                'rgb(75, 192, 192)',  
+                'rgb(65, 162, 162)',  
+                'rgb(255, 99, 132)',   
+                'rgb(54, 162, 235)',  
+                'rgb(255, 206, 86)',   
+                'rgb(153, 102, 255)',
+                'rgb(255, 61, 61)'
+            ];
+            return colors[index % colors.length];
+        }
 
-            
-            function getColor(index) {
-                const colors = [
-                    'rgb(75, 192, 192)',  
-                    'rgb(65, 162, 162)',  
-                    'rgb(255, 99, 132)',   
-                    'rgb(54, 162, 235)',  
-                    'rgb(255, 206, 86)',   
-                    'rgb(153, 102, 255)',
-                    'rgb(255, 61, 61)'
-                ];
-                return colors[index % colors.length];
+        // Create datasets dynamically
+        var datasets = allValues.map((values, index) => ({
+            label: allTags[index],
+            data: values,
+            fill: false,
+            borderColor: getColor(index),
+            tension: 0.1
+        }));
+
+        var data = {
+            labels: lab,
+            datasets: datasets
+        };
+
+        // Make the chart responsive
+        var options = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                xAxes: [{
+                    type: 'time'
+                }]
             }
+        };
 
-            // Create datasets dynamically
-            var datasets = allValues.map((values, index) => ({
-                label: allTags[index],
-                data: values,
-                fill: false,
-                borderColor: getColor(index),
-                tension: 0.1
-            }));
+        new Chart(ctx, {
+            type: "line", 
+            data: data,
+            options: options
+        });
 
-            var data = {
-                labels: lab,
-                datasets: datasets
-            };
+        // Dark mode functionality
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+            let darkMode = document.body.classList.contains("dark-mode");
+            localStorage.setItem("darkMode", darkMode);
+        }
 
-            new Chart(ctx, {
-                type: "line", 
-                data: data,
-                options: {
-                    scales: {
-                    xAxes: [{
-                        type: 'time'
-                    }]
-                    }
+        // Update active nav link
+        function updateActiveNavLink() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
                 }
             });
-        </script>
-    </body>
+        }
+
+        // Listen for both Turbo and regular page loads
+        document.addEventListener('turbo:load', updateActiveNavLink);
+        window.addEventListener('load', updateActiveNavLink);
+
+        // Sidebar toggle functionality
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            const toggleIcon = document.getElementById('toggle-icon');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+            
+            // Update toggle icon
+            if (sidebar.classList.contains('collapsed')) {
+                toggleIcon.textContent = '☰';
+            } else {
+                toggleIcon.textContent = '✕';
+            }
+            
+            // Save state
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        }
+        
+        // Check if mobile device and auto-collapse sidebar if needed
+        function checkMobileDevice() {
+            if (window.innerWidth <= 576) {
+                document.body.classList.add('mobile-view');
+            } else {
+                document.body.classList.remove('mobile-view');
+            }
+        }
+
+        window.onload = function() {
+            if (localStorage.getItem("darkMode") === "true") {
+                document.body.classList.add("dark-mode");
+                document.getElementById("darkModeSwitch").checked = true;
+            }
+            
+            // Restore sidebar state
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                toggleSidebar();
+            }
+            
+            updateActiveNavLink();
+            checkMobileDevice();
+            
+            // Listen for window resize to handle orientation changes
+            window.addEventListener('resize', checkMobileDevice);
+        }
+    </script>
+</body>
 </html>

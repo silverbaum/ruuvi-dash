@@ -63,11 +63,13 @@ def update_data(data):
 def graph(item):
     global tag_names
     try:
-        weeks = request.args.get('weeks', 1, type=int)
-        if weeks == 0:
-            df = pd.read_sql(f"SELECT * FROM data where date > datetime('now', '-1 days');", dbconn, index_col=None).groupby('id')
-        else:
-            df = pd.read_sql(f"SELECT * FROM data where date > datetime('now', '-{weeks*7} days');", dbconn, index_col=None).groupby('id')
+        timevalue = request.args.get('value', 1, type=int)
+        interval = request.args.get('interval', 'weeks', type=str)
+
+        df = pd.read_sql(f"SELECT * FROM data where date > datetime('now', '-{timevalue*7 if interval == "weeks" else timevalue} days');",\
+                          dbconn, index_col=None).groupby('id')
+
+
         
         # Initialize lists to store all data
         all_dates = []

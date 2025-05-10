@@ -16,10 +16,10 @@
         .toggle-switch {
             position: fixed;
             bottom: 20px;
-            left: 10%;
-            transform: translateX(-50%);
+            right: 20px;
             display: flex;
             align-items: center;
+            z-index: 1000;
         }
 
         .switch {
@@ -72,7 +72,7 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            margin-top: 3rem;
+            margin-top: 1rem;
             margin-bottom: 2rem;
         }
 
@@ -94,7 +94,12 @@
             box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
         }
 
-        /* Modern table styles */
+        /* Mobile-friendly table styles */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
         .table {
             border-collapse: separate;
             border-spacing: 0;
@@ -103,6 +108,7 @@
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             border: none;
+            min-width: 300px; /* Ensures the table doesn't get too squished */
         }
 
         .table thead {
@@ -155,39 +161,235 @@
             text-align: end;
             
         }
+
+        /* Sidebar styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            background-color: #f8f9fa;
+            padding: 20px;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto; /* Make sidebar scrollable */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+
+        .dark-mode .sidebar {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+        }
+
+        .sidebar.collapsed {
+            width: 60px;
+            padding: 20px 10px;
+        }
+
+        .sidebar.collapsed .sidebar-header h3,
+        .sidebar.collapsed .nav-link span,
+        .sidebar.collapsed .dark-mode-toggle,
+        .sidebar.collapsed .title {
+            display: none;
+        }
+
+
+        .sidebar-toggle {
+            position: absolute;
+            top: 20px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode .sidebar-toggle {
+            background-color: #2c3e50;
+            border-color: #34495e;
+            color: #ecf0f1;
+        }
+
+        .sidebar-toggle:hover {
+            background-color: #e9ecef;
+        }
+
+        .dark-mode .sidebar-toggle:hover {
+            background-color: #34495e;
+        }
+
+        .sidebar-header {
+            padding: 20px 0;
+            text-align: center;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+
+        .dark-mode .sidebar-header {
+            border-bottom-color: #34495e;
+        }
+
+        .nav-link {
+            color: #495057;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode .nav-link {
+            color: #ecf0f1;
+        }
+
+        .nav-link:hover {
+            background-color: #e9ecef;
+            text-decoration: none;
+        }
+
+        .dark-mode .nav-link:hover {
+            background-color: #34495e;
+        }
+
+        .nav-link.active {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .dark-mode .nav-link.active {
+            background-color: #2980b9;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 60px;
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .main-content {
+                margin-left: 200px;
+                padding: 15px;
+            }
+            
+            .main-content.expanded {
+                margin-left: 60px;
+            }
+            
+            .table {
+                min-width: 500px;
+            }
+            
+            .dashboard-header h1 {
+                font-size: 1.75rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .sidebar {
+                width: 180px;
+            }
+            
+            .main-content {
+                margin-left: 180px;
+                padding: 10px;
+            }
+            
+            .toggle-switch {
+                bottom: 10px;
+                right: 10px;
+            }
+            
+            /* Auto-collapse sidebar on small screens */
+            body.mobile-view .sidebar {
+                width: 60px;
+                padding: 20px 10px;
+            }
+            
+            body.mobile-view .sidebar .sidebar-header h3,
+            body.mobile-view .sidebar .nav-link span,
+            body.mobile-view .sidebar .title {
+                display: none;
+            }
+            
+            body.mobile-view .main-content {
+                margin-left: 60px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container table-responsive"> <!--Use 'container-fluid' for full-width dashboard-->
-        <div class="dashboard-header">
-            <h1>Dashboard</h1>
-            <div id="connection-status" class="status-indicator disconnected"></div>
-            <div><span></span></div>
-            <a href="/graph/temperature" class="link">Graph</a>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-toggle" onclick="toggleSidebar()">
+            <span id="toggle-icon">&#9776;</span>
         </div>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Tag ID</th>
-                    <th>Temperature (C)</th>
-                    <th>Humidity (%)</th>
-                    <th>Pressure (kPa)</th>
-                    
-                </tr>
-            </thead>
-            <tbody id="data-table">
-                <!-- Data will be inserted here by JavaScript -->
-            </tbody>
-        </table>
+        <div class="sidebar-header">
+            <h3>Ruuvi Dashboard</h3>
+        </div>
+        <nav>
+            <a href="/dashboard" class="nav-link active" >
+                <span>Dashboard</span>
+            </a>
+            <span class="title">Graph:</span>
+            <a href="/graph/temperature" class="nav-link" >
+                <span>Temperature</span>
+            </a>
+            <a href="/graph/humidity" class="nav-link" >
+                <span>Humidity</span>
+            </a>
+            <a href="/graph/pressure" class="nav-link">
+                <span>Pressure</span>
+            </a>
+        </nav>
+        <!-- Dark mode toggle switch -->
+        <div class="dark-mode-toggle">
+            <label for="darkModeSwitch">Dark Mode:</label>
+            <label class="switch">
+                <input type="checkbox" id="darkModeSwitch" onclick="toggleDarkMode()">
+                <span class="slider"></span>
+            </label>
+        </div>
     </div>
 
-    <!-- Dark mode toggle switch -->
-    <div class="toggle-switch">
-        <label for="darkModeSwitch">Dark Mode:</label>
-        <label class="switch">
-            <input type="checkbox" id="darkModeSwitch" onclick="toggleDarkMode()">
-            <span class="slider"></span>
-        </label>
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container-fluid table-responsive">
+            <div class="dashboard-header">
+                <h1>Dashboard</h1>
+                <div id="connection-status" class="status-indicator disconnected"></div>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tag ID</th>
+                        <th>Temperature (C)</th>
+                        <th>Humidity (%)</th>
+                        <th>Pressure (kPa)</th>
+                    </tr>
+                </thead>
+                <tbody id="data-table">
+                    <!-- Data will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
@@ -213,6 +415,13 @@
             const initialData = JSON.parse('{{ data|tojson }}');
             console.log('Initial data:', initialData);
             updateTable(initialData);
+            updateActiveNavLink();
+            
+            // Check if we're on a mobile device
+            checkMobileDevice();
+            
+            // Listen for window resize to handle orientation changes
+            window.addEventListener('resize', checkMobileDevice);
         });
 
         // Update data when received from server
@@ -227,10 +436,6 @@
             
             Object.keys(data).forEach((tagId) => {
                 const tagData = data[tagId];
-                //debug
-                //console.log('Processing tag:', tagId, 'with data:', tagData);
-                
-                // Check if data exists and has the expected structure
                 if (tagData && typeof tagData === 'object') {
                     const row = document.createElement('tr');
                     row.innerHTML = `
@@ -238,7 +443,6 @@
                         <td>${tagData.temperature ? tagData.temperature.toFixed(2) : 'N/A'}</td>
                         <td>${tagData.humidity ? tagData.humidity.toFixed(2) : 'N/A'}</td>
                         <td>${tagData.pressure ? tagData.pressure.toFixed(2) : 'N/A'}</td>
-                        
                     `;
                     tableBody.appendChild(row);
                 }
@@ -252,11 +456,60 @@
             localStorage.setItem("darkMode", darkMode);
         }
 
+        // Update active nav link
+        function updateActiveNavLink() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+
+        // Sidebar toggle functionality
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            const toggleIcon = document.getElementById('toggle-icon');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+            
+            // Update toggle icon
+            if (sidebar.classList.contains('collapsed')) {
+                toggleIcon.textContent = '☰';
+            } else {
+                toggleIcon.textContent = '✕';
+            }
+            
+            // Save state
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        }
+        
+        // Check if mobile device and auto-collapse sidebar if needed
+        function checkMobileDevice() {
+            if (window.innerWidth <= 576) {
+                document.body.classList.add('mobile-view');
+            } else {
+                document.body.classList.remove('mobile-view');
+            }
+        }
+
         window.onload = function() {
             if (localStorage.getItem("darkMode") === "true") {
                 document.body.classList.add("dark-mode");
                 document.getElementById("darkModeSwitch").checked = true;
             }
+            
+            // Restore sidebar state
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                toggleSidebar();
+            }
+            
+            updateActiveNavLink();
+            checkMobileDevice();
         }
     </script>
 </body>
