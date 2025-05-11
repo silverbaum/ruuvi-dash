@@ -27,8 +27,8 @@ def update_database():
     try:
         for i, tag in enumerate(RTags.values()):
             log.debug(f" i: {i}, tag: {tag}")
-            cur.execute(f"INSERT INTO data(id, temperature, humidity, pressure, date) VALUES ('{i}', {tag.get('temperature')}, {tag.get('humidity')}, {tag.get('pressure', 0)}, datetime('now'));")
-        cur.execute("DELETE FROM data WHERE date < datetime('now', '-1 years');")
+            cur.execute(f"INSERT INTO data(id, temperature, humidity, pressure, date) VALUES ('{i}', {tag.get('temperature')}, {tag.get('humidity')}, {tag.get('pressure', 0)}, datetime('now', 'localtime'));")
+        cur.execute("DELETE FROM data WHERE date < datetime('now', 'localtime', '-1 years');")
         dbconn.commit()
         log.info(" Inserted data into db")
     except Exception as e:
@@ -68,7 +68,7 @@ def graph(item):
         log.debug(f"item: {item}, timevalue: {timevalue}, interval: {interval}")
 
 
-        df = pd.read_sql(f"SELECT * FROM data where date > datetime('now', '-{timevalue*7 if interval == "weeks" else timevalue} days');",\
+        df = pd.read_sql(f"SELECT * FROM data where date > datetime('now', 'localtime', '-{timevalue*7 if interval == "weeks" else timevalue} days');",\
                           dbconn, index_col=None).groupby('id')
         for id, obj in df:
             log.debug(obj)
@@ -139,7 +139,7 @@ def admin():
     weeks: int = request.args.get("weeks", type=int)
     if passwd == "javasdk8" and weeks >= 0:
         try:
-            cur.execute(f"DELETE FROM data WHERE date < datetime('now', '-{weeks*7} days');")
+            cur.execute(f"DELETE FROM data WHERE date < datetime('now', 'localtime', '-{weeks*7} days');")
             dbconn.commit()
             log.info(f"successfully deleted data older than {weeks} weeks")
         except Exception as e:
