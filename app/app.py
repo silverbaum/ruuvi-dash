@@ -75,20 +75,18 @@ def graph(item):
 
         
         # Initialize lists to store all data
-        all_dates = []
         all_values = []
         all_tags = []
         
         for id, group in df:
             dates = pd.to_datetime(group.date, errors='coerce').dt.strftime("%d/%m %H:%M").tolist()
             if item == "humidity":
-                values = group.humidity.tolist()
+                values = list(zip(dates, group.humidity.tolist()))
             elif item == "pressure":
-                values = group.pressure.tolist()
+                values = list(zip(dates, group.pressure.tolist()))
             else:
-                values = group.temperature.tolist()
+                values = list(zip(dates, group.temperature.tolist()))
                 
-            all_dates.append(dates)
             all_values.append(values)
             if tag_names and len(tag_names) > int(id):
                 if tag_names[int(id)] != "":
@@ -99,12 +97,10 @@ def graph(item):
 
         if not item or (item != "humidity" and item != "pressure" and item != "temperature"):
             return render_template("graph.html", 
-                                labels=all_dates[0] if all_dates else [],
                                 all_values=all_values if all_values else [],
                                 all_tags=all_tags if all_tags else [])
         
         return render_template("graph.html", 
-                            labels=all_dates[0] if all_dates else [],
                             all_values=all_values if all_values else [],
                             all_tags=all_tags if all_tags else [],)
     except Exception as e:
