@@ -64,11 +64,17 @@ def graph(item):
     global tag_names
     try:
         timevalue = request.args.get('value', 1, type=int)
-        interval = request.args.get('interval', 'weeks', type=str)
+        interval = request.args.get('interval', 'hours', type=str)
         log.debug(f"item: {item}, timevalue: {timevalue}, interval: {interval}")
 
+        time = timevalue
+        if interval == "weeks":
+            time = time * 24 * 7
+        elif interval == "days":
+            time = time*24
 
-        df = pd.read_sql(f"SELECT * FROM data where date > datetime('now', 'localtime', '-{timevalue*7 if interval == "weeks" else timevalue} days');",\
+        
+        df = pd.read_sql(f"SELECT * FROM data where date > datetime('now', 'localtime', '-{time} hours');",\
                           dbconn, index_col=None).groupby('id')
         for id, obj in df:
             log.debug(obj)

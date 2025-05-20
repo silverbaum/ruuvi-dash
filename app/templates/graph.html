@@ -5,6 +5,7 @@
     <head>
     <title>Graph</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/luxon@^2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@^1"></script>
@@ -49,9 +50,10 @@
     <div class="main-content">
         <div class="time-controls-container">
             <div class="time-range-buttons">
+                <a href="?value=1&interval=hours" class="time-range-btn">1 Hour</a>
+                <a href="?value=1&interval=days" class="time-range-btn">1 Day</a>
+                <a href="?value=1&interval=weeks" class="time-range-btn">1 Week</a>
                 <a href="?value=4&interval=weeks" class="time-range-btn">1 Month</a>
-                <a href="?value=12&interval=weeks" class="time-range-btn">3 Months</a>
-                <a href="?value=24&interval=weeks" class="time-range-btn">6 Months</a>
             </div>
             <div class="interval-form">
                 <form>
@@ -59,6 +61,7 @@
                     <select name="interval" class="interval-select" onchange="this.form.submit()">
                         <option value="weeks" {% if request.args.get('interval', 'weeks') == 'weeks' %}selected{% endif %}>weeks</option>
                         <option value="days" {% if request.args.get('interval') == 'days' %}selected{% endif %}>days</option>
+                        <option value="hours" {% if request.args.get('interval') == 'hours' %}selected{% endif %}>hours</option>
                     </select>
                 </form>
             </div>
