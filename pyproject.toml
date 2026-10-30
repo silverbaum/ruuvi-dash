@@ -7,7 +7,7 @@ requires-python = ">=3.14"
 dependencies = [
     "bidict>=0.23.1",
     "blinker>=1.9.0",
-    "certifi>=2026.2.25",
+    "certifi>=2026.10.19",
     "charset-normalizer>=3.4.7",
     "click>=8.3.2",
     "flask>=3.1.3",
